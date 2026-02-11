@@ -14,6 +14,10 @@ py_sources = [
     'tests.py',
     'validators.py',
     'xtc.py',
+    'tjump.py',
+    'solvent_plotter.py',
+    'tjump_classifier.py',
+    'generic_solvent_plotter.py',
 ]
 
 py3.install_sources(

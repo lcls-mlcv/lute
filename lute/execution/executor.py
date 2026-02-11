@@ -1344,7 +1344,12 @@ class Executor(BaseExecutor):
                 "If you did run a Task, it may have failed immediately!"
             )
             return
-        if isinstance(summary, dict):
+        new_summary: Optional[str]
+        if isinstance(summary, ElogSummaryPlots):
+            new_summary = self._process_elog_plot(summary)
+            if new_summary is not None:
+                self._analysis_desc.task_result.summary = new_summary
+        elif isinstance(summary, dict):
             # Assume dict is key: value pairs of eLog run parameters to post
             self._analysis_desc.task_result.summary = self._process_summary_run_params(
                 summary

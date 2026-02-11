@@ -1,0 +1,99 @@
+%YAML 1.3
+---
+title: "Solvent Scattering Analysis Configuration"
+experiment: "{{ $EXPERIMENT }}"
+run: "{{ $RUN_NUM }}"
+date: "2025/08/15"
+lute_version: 0.1      # Do not be change unless need to force older version
+task_timeout: 6000
+work_dir: ""
+...
+---
+PlotGenericSolvent:
+  # REQUIRED: Path to the plotting script
+  python_script: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/results/PumpProbe/generic_scattering.py"
+
+  # OPTIONAL: Detector name
+  detname: "jungfrau"
+
+  # OPTIONAL: Low q value for normalization
+  q_low: 0.8
+
+  # OPTIONAL: High q value for normalization
+  q_high: 3.5
+
+  # OPTIONAL: number of subsamples to plot I vs q traces
+  # num_subsamples: 250
+
+  # OPTIONAL: median filter window size (odd integer) for smoothing
+  # medfilt_window: 13
+
+  # OPTIONAL: Water q params (low_q, high_q, ratio) for filtering az int traces
+  water_q_params: [1.0, 1.93, 1.25]
+
+  # OPTIONAL: Water peak sigma for filtering az int traces
+  water_peak_sigma: 2.0
+
+  # OPTIONAL: Input from previous smalldata task. If not provided, LUTE validator defaults to the following
+  # input_h5: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/hdf5/smalldata/{{ $EXPERIMENT }}_Run{{ $RUN_NUM:04d }}.h5"
+
+  # OPTIONAL: Output directory for results, default to the following
+  # output_dir: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/stats/summary/GenericSolventScattering/{{ $RUN_NUM:04d }}"
+
+
+SubmitSMD:
+  # Command line arguments
+  producer: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/results/smalldata_tools/lcls2_producers/smd_producer.py"
+  #run: 99
+  #experiment: ""
+  #stn: 0
+  # directory: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/hdf5/smalldata"
+  #config: "mfx_cctbx"
+  gather_interval: 5
+  #norecorder: False
+  #url: "https://pswww.slac.stanford.edu"
+  #epicsAll: False
+  #full: False
+  #fullSum: False
+  #default: true
+  #image: False
+  #tiff: False
+  #centerpix: False
+  #postRuntable: False
+  #wait: False
+  #xtcav: False
+  #noarch: False
+  # **************************************************************************/
+  # * Below this point you will be configuring the prod_config_mfx file ******/
+  # * This will overwrite any manual changes you make to that file      ******/
+  # * Comment all the rest of these parameters out to manually edit     ******/
+  # **************************************************************************/
+  # Producer variables. These are substituted into the producer to run specific
+  # data reduction algorithms. Uncomment and modify as needed.
+  # If you prefer to modify the producer file directly, leave commented.
+  # Beginning with `getROIs`, you will need to modify the first entry to be a
+  # detector. This detector MUST MATCH one of the detectors in `detnames`.
+  # In the future this will be automated. If you have multiple detectors you can
+  # add them with their own set of parameters.
+  detnames: ["jungfrau","epix100_0", "qadc"]
+  #epicsPV: []
+  epicsArchFilePV:
+    - ["SP1L0:DCCM:MMS:TH1.RBV", 'dccm_th1']
+    - ["SP1L0:DCCM:MMS:TH2.RBV", 'dccm_th2']
+    - ["SP1L0:DCCM:MMS:TH1", 'dccm_th1_setpoint']
+    - ["SP1L0:DCCM:MMS:TH2", 'dccm_th2_setpoint']
+    - ["SP1L0:DCCM:energy:OphydReadback",'dccm_E']
+    - ["SP1L0:DCCM:energy:OphydSetpoint",'dccm_E_setpoint']
+    - ["MFX:LAS:MMN:11.RBV",'lens_h']
+    - ["MFX:LAS:MMN:12.RBV",'lens_v']
+  #ttCalib: []
+  getAzIntParams:
+   jungfrau:
+     eBeam: 7.1
+     center: [0, 0]
+     dis_to_sam: 150
+     phiBins: 11
+     qbin: 0.02
+     tx: 0
+     ty: 0
+... 

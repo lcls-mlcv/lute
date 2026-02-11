@@ -1,0 +1,89 @@
+%YAML 1.3
+---
+title: "T-Jump Analysis Configuration"
+experiment: "{{ $EXPERIMENT }}"
+run: "{{ $RUN_NUM }}"
+date: "2025/08/15"
+lute_version: 0.1      # Do not be change unless need to force older version
+task_timeout: 6000
+work_dir: ""
+...
+---
+PlotSolvent:
+  # REQUIRED: Path to the plotting script
+  # python_script: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/results/doris/PumpProbe/event_code_contour.py"
+  python_script: "/sdf/data/lcls/ds/prj/prjlumine22/results/dorismai/PumpProbe/event_code_contour.py"
+
+  # OPTIONAL: list of event codes
+  event_codes: [201, 202, 203, 204, 205, 206, 207, 209, 210, 211, 212, 213]
+
+  # OPTIONAL: Laser on event code
+  laser_on_event_code: 203
+
+  # OPTIONAL: Difference reference event code, default is the last event code
+  # reference_event_code: 212
+
+  # OPTIONAL: Water q params for filtering, default is None. 
+  # water_q_params: [1.0, 1.93, 1.25]
+
+  # OPTIONAL: Water peak sigma for filtering, default is None.
+  # water_peak_sigma: 2.0
+
+  # OPTIONAL: Median filter window size for smoothing, default is 13.
+  # medfilt_window: 13
+
+  # OPTIONAL: Input from previous smalldata task. If not provided, LUTE validator defaults to the following
+  # input_h5: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/hdf5/smalldata/{{ $EXPERIMENT }}_Run{{ $RUN_NUM:04d }}.h5"
+
+  # OPTIONAL: Output directory for results, default to the following
+  # output_dir: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/stats/summary/SolventScattering/{{ $RUN_NUM:04d }}
+
+# TJump:
+  # REQUIRED: Path to your custom processing script
+  # python_script: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/results/doris/tjump_LUTE/smalldata_to_Tval_multimethod.py"
+  
+  # OPTIONAL: Input from previous smalldata task. If not provided, LUTE validator and/or the 
+  # TJump script defaults to the following
+  # input_h5: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/hdf5/smalldata/{{ $EXPERIMENT }}_Run{{ $RUN_NUM:04d }}.h5"
+  
+  # OPTIONAL: Output directory for results, default to the following
+  # output_dir: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/stats/summary/TJump/{{ $RUN_NUM:04d }}"
+  
+  # OPTIONAL: Output h5 file name, default to the following
+  # output_h5: "run{{ $RUN_NUM:04d }}_sd2qwp1.hdf5"
+
+  # OPTIONAL: Peak fitting method: 'simple' or 'spline' or 'two_peak_fit' (default=szimple). 
+  # Not applicable to sd2qwp1.py script.
+  # peakfit: "spline"
+
+ClassifyTJump:
+  # REQUIRED: Path to the classification script
+  # python_script: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/results/doris/PumpProbe/event_code_classifer.py"
+  python_script: "/sdf/data/lcls/ds/prj/prjlumine22/results/dorismai/PumpProbe/event_code_classifer.py"
+
+  # OPTIONAL: list of event codes
+  event_codes: [203, 201, 202, 204, 205, 206, 207, 209, 210, 211, 212, 213]
+
+  # OPTIONAL: Input from previous smalldata task. If not provided, LUTE validator and/or the 
+  # TJump script defaults to the following
+  # input_h5: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/hdf5/smalldata/{{ $EXPERIMENT }}_Run{{ $RUN_NUM:04d }}.h5"
+
+  # OPTIONAL: Output directory for results, default to the following
+  # output_dir: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/stats/summary/TJumpClassification/{{ $RUN_NUM:04d }}"
+
+  # OPTIONAL: Output csv file name, default to the following
+  # output_csv: "run{{ $RUN_NUM:04d }}_tjump_classifier.csv"
+
+
+SubmitSMD:
+  producer: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/results/doris/smalldata_tools/lcls2_producers/smd_producer.py"
+  detnames: ["jungfrau"]
+  directory: "/sdf/data/lcls/ds/mfx/{{ $EXPERIMENT }}/results/doris/lute_output"
+  getAzIntParams:
+    jungfrau:
+      eBeam: 9.5
+      center: [-1107, 918]
+      dis_to_sam: 92.51
+      tx: 0
+      ty: 0
+... 
