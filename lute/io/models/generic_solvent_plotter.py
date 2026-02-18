@@ -126,6 +126,13 @@ class PlotGenericSolventParameters(ThirdPartyParameters):
         rename_param="plot-alpha",
     )
 
+    azint_method: str = Field(
+        "azav",
+        description="Method used for the azimuthal integration to use. Choices are azav, pyfai.",
+        flag_type="--",
+        rename_param="azint-method",
+    )
+
     # ====== Validations ======
     @validator("water_q_params")
     def water_q_params_validator(
