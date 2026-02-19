@@ -7,7 +7,7 @@ import logging
 import os
 import socket
 import sys
-from typing import List
+from typing import List, Optional
 
 from lute.execution.launch import (
     get_base_launch_parser,
@@ -72,6 +72,19 @@ def main():
     num_concurrent_steps: int = get_concurrent_job_steps(wf_defn)
     manager_host: str = socket.gethostname()
     manager_port: int = 41239
+    try:
+        import zmq
+        context: zmq.Context = zmq.Context()
+        sock: zmq.sugar.socket.Socket = context.socket(zmq.PULL)
+        new_port: Optional[int] = sock.bind_to_random_port("tcp://*")
+        if new_port is None:
+            raise RuntimeError("Cannot bind a port!")
+        manager_port = new_port
+        # Cleanup resources so maestro can then use the port that was found
+        sock.close()
+        context.term()
+    except:
+        raise RuntimeError("Cannot bind a port!")
     os.environ["LUTE_MANAGER_URL"] = f"{manager_host}:{manager_port}"
     # fmt: off
     manager_params: _maestro.ManagerParameters = _maestro.ManagerParameters(
