@@ -21,10 +21,10 @@ index 4c2fe87..dcdf7d4 100755
          if ds.rank == 0:
              requests.post(os.environ["JID_UPDATE_COUNTERS"], json=[{"key": "<b>Last Event</b>", "value": "~ %d cores * %d evts"%(ds.size,evt_num)},{"key": "<b>Duration</b>", "value": "%f min"%(prod_time)}])
 diff --git a/lcls2_producers/smd_producer.py b/lcls2_producers/smd_producer.py
-index 9f52b00..2b50c9b 100755
+index c23a1c1..2a9f3ed 100755
 --- a/lcls2_producers/smd_producer.py
 +++ b/lcls2_producers/smd_producer.py
-@@ -1058,6 +1058,6 @@ logger.debug("rank {0} on {1} is finished".format(rank, hostname))
+@@ -1314,7 +1314,7 @@ logger.debug("rank {0} on {1} is finished".format(rank, hostname))
  #        cmd = ['timestamp_sort_h5', h5_f_name, h5_f_name]
  
  if ds.unique_user_rank():
@@ -33,6 +33,8 @@ index 9f52b00..2b50c9b 100755
          requests.post(
              os.environ["JID_UPDATE_COUNTERS"],
              json=[
+diff --git a/smalldata_tools/ana_funcs/azav_pyfai.py b/smalldata_tools/ana_funcs/azav_pyfai.py
+index fafbced..8dc3502 100644
 --- a/smalldata_tools/ana_funcs/azav_pyfai.py
 +++ b/smalldata_tools/ana_funcs/azav_pyfai.py
 @@ -1,3 +1,4 @@
@@ -54,15 +56,15 @@ index 9f52b00..2b50c9b 100755
  
  class azav_pyfai(DetObjectFunc):
      """
-@@ -49,23 +52,35 @@ class azav_pyfai(DetObjectFunc):
+@@ -49,23 +52,38 @@ class azav_pyfai(DetObjectFunc):
      def __init__(self, **kwargs):
          self._name = kwargs.get("name", "pyfai")
          super(azav_pyfai, self).__init__(**kwargs)
 -
-         self.mask = kwargs.pop("userMask", None)
 +        if isinstance(self.mask, str):
 +            self.mask = np.load(self.mask)
 +            self.mask = self.mask.astype(bool)
+         self.mask = kwargs.pop("userMask", None)
          self.threshold = kwargs.pop("thres", None)
          self.return2d = kwargs.pop("return2d", "False")
 -
@@ -103,7 +105,7 @@ index 9f52b00..2b50c9b 100755
          # we should have code that extract setup parameters
          #    in case people mess w/ the input
          # we should also extra q/theta/... bins for plotting later.
-@@ -94,27 +109,6 @@ class azav_pyfai(DetObjectFunc):
+@@ -94,27 +112,6 @@ class azav_pyfai(DetObjectFunc):
  
      def setFromDet(self, det):
          super(azav_pyfai, self).setFromDet(det)
@@ -131,7 +133,7 @@ index 9f52b00..2b50c9b 100755
          if (
              self.mask is not None
              and det.cmask is not None
-@@ -135,12 +129,7 @@ class azav_pyfai(DetObjectFunc):
+@@ -135,12 +132,7 @@ class azav_pyfai(DetObjectFunc):
                      except:
                          self.mask = None
          if self.mask is not None and self.mask.ndim == 3:
@@ -145,7 +147,7 @@ index 9f52b00..2b50c9b 100755
          print(f"Azimuthal integrator:\n{self.ai}")
          return
  
-@@ -149,9 +138,9 @@ class azav_pyfai(DetObjectFunc):
+@@ -149,9 +141,9 @@ class azav_pyfai(DetObjectFunc):
  
      def process(self, data):
          if self.threshold is not None:
@@ -157,15 +159,14 @@ index 9f52b00..2b50c9b 100755
          out = self._process(data)
          return out
  
-@@ -178,5 +167,4 @@ class azav_pyfai(DetObjectFunc):
+@@ -178,5 +170,4 @@ class azav_pyfai(DetObjectFunc):
                  method="cython",
                  **self._azav_kwargs,
              )
 -
--            return {"azav": I, "q": q}
-+            return {"azav": I, "q": q}
+             return {"azav": I, "q": q}
 diff --git a/summaries/BeamlineSummaryPlots_mfx.py b/summaries/BeamlineSummaryPlots_mfx.py
-index dbd21ac..afc36a2 100755
+index dbd21ac..340c154 100755
 --- a/summaries/BeamlineSummaryPlots_mfx.py
 +++ b/summaries/BeamlineSummaryPlots_mfx.py
 @@ -169,10 +169,11 @@ if int(os.environ.get("RUN_NUM", "-1")) > 0:
