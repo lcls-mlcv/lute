@@ -155,6 +155,14 @@ class SubmitSMDParameters(ThirdPartyParameters):
                 False, description="Whether to return the 2D q/phi integration."
             )
 
+            userMask: Optional[str] = Field(
+                None,
+                description=(
+                    "Path to a numpy array (.npy) to use as a mask for azimuthal "
+                    "integration."
+                ),
+            )
+
         class PhotonParams(BaseModel):
             ADU_per_photon: float = Field(9.5, description="Number of ADU per photon.")
 

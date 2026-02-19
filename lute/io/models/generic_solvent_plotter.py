@@ -133,6 +133,13 @@ class PlotGenericSolventParameters(ThirdPartyParameters):
         rename_param="azint-method",
     )
 
+    num_intensity_bins: int = Field(
+        None,
+        description="Number of bins for total intensity based subsampling. Default is None which does uniform subsampling not by intensity.",
+        flag_type="--",
+        rename_param="num-intensity-bins",
+    )
+
     # ====== Validations ======
     @validator("water_q_params")
     def water_q_params_validator(
