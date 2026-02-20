@@ -34,7 +34,7 @@ index c23a1c1..2a9f3ed 100755
              os.environ["JID_UPDATE_COUNTERS"],
              json=[
 diff --git a/smalldata_tools/ana_funcs/azav_pyfai.py b/smalldata_tools/ana_funcs/azav_pyfai.py
-index fafbced..8dc3502 100644
+index fafbced..a2f7fdd 100644
 --- a/smalldata_tools/ana_funcs/azav_pyfai.py
 +++ b/smalldata_tools/ana_funcs/azav_pyfai.py
 @@ -1,3 +1,4 @@
@@ -61,10 +61,10 @@ index fafbced..8dc3502 100644
          self._name = kwargs.get("name", "pyfai")
          super(azav_pyfai, self).__init__(**kwargs)
 -
+         self.mask = kwargs.pop("userMask", None)
 +        if isinstance(self.mask, str):
 +            self.mask = np.load(self.mask)
 +            self.mask = self.mask.astype(bool)
-         self.mask = kwargs.pop("userMask", None)
          self.threshold = kwargs.pop("thres", None)
          self.return2d = kwargs.pop("return2d", "False")
 -
