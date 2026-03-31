@@ -1,0 +1,4530 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="GFD, VM">
+      
+      
+      
+        <link rel="prev" href="../dynamic_workflows/">
+      
+      
+        <link rel="next" href="../tests/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Maestro Documentation - LUTE</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#maestro-architecture-and-documentation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LUTE" class="md-header__button md-logo" aria-label="LUTE" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LUTE
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Maestro Documentation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/slac-lcls/lute" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LUTE" class="md-nav__button md-logo" aria-label="LUTE" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LUTE
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/slac-lcls/lute" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick_start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage Manual
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage Manual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/running_lute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running LUTE
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/hello_world/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    A complete simple example
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Task Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Task Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/tasks/smalldata_tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using smalldata_tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/tasks/xtc1_to_xtc2_conversion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Converting XTC1 to XTC2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/tasks/bayfai.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running BayFAI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Documentation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Documentation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture and Execution Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a new Task
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Creating a new Task
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../new_task/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../new_task/first_party/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../new_task/third_party/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Third Party
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a new Workflow
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Creating a new Workflow
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../creating_workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../creating_workflows_maestro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    With Maestro
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../creating_workflows_airflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    With Airflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dynamic_workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dynamic Run-time Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maestro Documentation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maestro Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-and-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture and Components
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /status
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /log
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /rpc
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/rpc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Request Body">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Response">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jobstep-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JobStep class
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="JobStep class">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#triggerrule-defining-when-a-step-should-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TriggerRule - Defining when a step should run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#launcher-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Launcher classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Launcher classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handler-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handler implementations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#managerparameters-and-manager-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ManagerParameters and Manager creation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running workflows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rough-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rough mechanism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Source Code
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Source Code
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/managed_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    managed_tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    execution
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    execution
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/execution/debug_utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    debug_utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/execution/executor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    executor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/execution/ipc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ipc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/execution/launch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    launch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/execution/logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/execution/subprocess_utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    subprocess_utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tasks
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    tasks
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/task/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/tasklets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tasklets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/dataclasses/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dataclasses
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/bayfai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bayfai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/_bayfai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    _bayfai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/_bayfai2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    _bayfai2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/geometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    geometry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/_geometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    _geometry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/sfx_find_peaks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sfx_find_peaks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/sfx_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sfx_index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/smalldata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    smalldata
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/_smalldata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    _smalldata
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/math/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    math
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/mpi_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mpi_test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_16" id="__nav_4_3_16_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    util
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3_16">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    util
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/util/html/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    html
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/tasks/util/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    io
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    io
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4_1" id="__nav_4_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/base/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    base
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/bayfai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    bayfai
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/geometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    geometry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/sfx_find_peaks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sfx_find_peaks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/sfx_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sfx_index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/sfx_merge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sfx_merge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/sfx_solve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sfx_solve
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/smd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    smd
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/validators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    validators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/models/mpi_tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mpi_tests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/calib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    calib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/db/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    db
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4_5" id="__nav_4_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    _db
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    _db
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/_db/common_sqlite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    common_sqlite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4_5_2" id="__nav_4_4_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_4_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    v2
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/_db/v2/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    api
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/_db/v2/_sqlite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    _sqlite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4_5_3" id="__nav_4_4_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v1
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_4_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4_5_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    v1
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/_db/v1/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    api
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/_db/v1/_sqlite/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    _sqlite
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/elog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    elog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../source/io/exceptions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    exceptions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design and Specifications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design and Specifications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Database
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Database
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/database_v2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API v0.2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API v0.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-and-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture and Components
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="REST API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /status
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /log
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /rpc
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="/rpc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#methods_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-parameters_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-body_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request Body
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Request Body">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#response_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Response">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jobstep-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JobStep class
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="JobStep class">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#triggerrule-defining-when-a-step-should-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TriggerRule - Defining when a step should run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#launcher-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Launcher classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Launcher classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handler-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handler implementations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#managerparameters-and-manager-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ManagerParameters and Manager creation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running workflows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rough-mechanism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rough mechanism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="maestro-architecture-and-documentation">Maestro Architecture and Documentation</h1>
+<p>As the <code>maestro</code> workflow manager is written as part of the LUTE project, some additional documentation on the architecture and features is warranted. Documentation for the other workflow backends (Airflow, Prefect) can be found from their respective developers.</p>
+<p>This page is a work in progress.</p>
+<h2 id="architecture-and-components">Architecture and Components</h2>
+<p>The <code>maestro</code> workflow manager is built from a number of basic components:</p>
+<ul>
+<li>
+<p>A <code>Server</code> class which implements an HTTP server.</p>
+</li>
+<li>
+<p>There are some additional classes and components for implementing the HTTP protocol (Requests, Responses, Methods, etc.).</p>
+</li>
+<li>
+<p>In general, the only additional component which will be relevant for most developers is the <code>Handler</code> class - this implements a functor which is used as a callback run for specific REST API endpoints.</p>
+</li>
+<li>
+<p>A <code>Launcher</code> class which provides an abstraction for job step submission. Sub-classes implement different ways of submitting a step in a workflow (e.g. via running a SLURM submission script to launch the step as a batch job).</p>
+</li>
+<li>
+<p>These server the same role that <code>Operators</code> did for Airflow, for example.</p>
+</li>
+<li>
+<p>A <code>ThreadPool</code> class which manages a number of threads for running job steps, and a queue to run them in the correct order.</p>
+</li>
+<li>A <code>Manager</code> class which links all the above components together.</li>
+</ul>
+<p>The workflow manager, composed of the components above, runs workflows which are defined using a <code>JobStep</code> class. This class fully describes all information required to run a single step in a workflow. A workflow is just a vector of these objects. A vector defines steps which can execute in parallel. The serial dependencies of the workflow (or DAG - directed acyclic graph) are defined by the <code>JobStep</code> class itself. The implementation is reminiscent of a linked-list, with downstream steps linked to the upstream steps via a <code>next</code> member. See below for more details on the class.</p>
+<h2 id="rest-api">REST API</h2>
+<p>The workflow manager may make use of the HTTP server for communication with the various steps in the workflow. The use of this server is dependent on the <code>Launcher</code> implementation - the <code>Launcher</code> subclass must provide the various callback functors (via subclasses of a <code>Handler</code> class) in order to use the HTTP server. Currently, the two implemented <code>Launcher</code> types use the HTTP server. The following is the currently used REST API. All calls are intended to be initiated by the <code>Executor</code> to the <code>maestro</code> workflow manager.</p>
+<p>Currently, the <code>launch_maestro.py</code> script (refer to the <a href="development/creating_workflows_maestro.md">creating workflows with maestro</a> documentation) sets the <code>LUTE_MANAGER_URL</code> environment variable with the <code>hostname:port</code> pair that can be used to communicate with the workflow manager. It will be passed to each step of the workflow. The <code>Executor</code> can use this environment variable to determine where to send API requests.</p>
+<p><strong>Important:</strong> HTTPS is <strong>NOT</strong> implemented - this communication is not intended to run over anything but a trusted local network (such as within the batch cluster).</p>
+<h3 id="endpoints">Endpoints</h3>
+<h4 id="status"><code>/status</code></h4>
+<h5 id="methods">Methods</h5>
+<ul>
+<li><code>GET</code></li>
+</ul>
+<h5 id="query-parameters">Query Parameters</h5>
+<p>None</p>
+<h5 id="request-body">Request Body</h5>
+<pre><code class="language-json">    {
+        &quot;managed_task&quot;: &quot;...&quot;,
+        &quot;status&quot;: &quot;...&quot;,
+        # additional keys to be available to other running managed Tasks
+    }
+</code></pre>
+<ul>
+<li>Additional keys may be provided beyond the two above (which are required). This allows <strong>managed</strong> <code>Task</code>s to attach additional metadata to their entry in the <code>maestro</code> tracker. This metadata will be available to other <strong>managed</strong> <code>Task</code>s that run in parallel - it therefore provides a mechanism for IPC between processes without dealing with host/port discovery.</li>
+</ul>
+<h5 id="response">Response</h5>
+<p>HTTP OK</p>
+<h5 id="example">Example</h5>
+<pre><code class="language-py3">import requests
+
+json_data: Dict[str, str] = {&quot;managed_task&quot;: &quot;SmallDataProducer&quot;, &quot;status&quot;: &quot;STARTED&quot;}
+resp: requests.models.Response = requests.post(
+    &quot;http://MANAGER_URL/status&quot;, json=json_data
+)
+</code></pre>
+<h4 id="log"><code>/log</code></h4>
+<h5 id="methods_1">Methods</h5>
+<ul>
+<li><code>POST</code></li>
+</ul>
+<h5 id="query-parameters_1">Query Parameters</h5>
+<p>None</p>
+<h5 id="request-body_1">Request Body</h5>
+<pre><code class="language-json">    {
+        &quot;managed_task&quot;: &quot;...&quot;,
+        &quot;message&quot;: &quot;...&quot;
+    }
+</code></pre>
+<h5 id="response_1">Response</h5>
+<p>HTTP OK</p>
+<h5 id="example_1">Example</h5>
+<pre><code class="language-py3">import requests
+
+json_data: Dict[str, str] = {
+    &quot;managed_task&quot;: &quot;SmallDataProducer&quot;, &quot;message&quot;: &quot;Test message&quot;
+}
+resp: requests.models.Response = requests.post(
+    &quot;http://MANAGER_URL/status&quot;, json=json_data
+)
+</code></pre>
+<h4 id="tasks"><code>/tasks</code></h4>
+<h5 id="methods_2">Methods</h5>
+<ul>
+<li><code>GET</code></li>
+</ul>
+<h5 id="query-parameters_2">Query Parameters</h5>
+<p>None</p>
+<h5 id="request-body_2">Request Body</h5>
+<p>None</p>
+<h5 id="response_2">Response</h5>
+<pre><code class="language-json">{
+    &quot;managed_tasks&quot;: [
+        { &quot;name&quot;: &quot;Task1Manager&quot;, &quot;status&quot;: &quot;RUNNING&quot;, /* other keys */ },
+        { &quot;name&quot;: &quot;Task2Manager&quot;, &quot;status&quot;: &quot;RUNNING&quot;, /* other keys */ }
+    ]
+}
+</code></pre>
+<ul>
+<li>
+<p>The <code>/tasks</code> API will return a set of keys that can change. In addition to just the name and status which is always provided, the <strong>managed</strong> <code>Task</code>s themselves may give information to <code>maestro</code> which will then be returned to other running processes that request it. This is provided via <code>/status</code> updates, which can include arbitrary keys in addition to the status update.</p>
+<ul>
+<li>In general, this will usually include the name of the <code>Task</code> (in addition to <strong>managed</strong> <code>Task</code>) and host names for the processes.</li>
+</ul>
+</li>
+</ul>
+<h5 id="example_2">Example</h5>
+<pre><code class="language-py3">import requests
+
+json_data: Dict[str, str] = {
+    &quot;managed_task&quot;: &quot;SmallDataProducer&quot;, &quot;message&quot;: &quot;Test message&quot;
+}
+resp: requests.models.Response = requests.get(&quot;http://MANAGER_URL/status&quot;)
+
+resp_json: Dict[str, Any] = resp.json()
+# resp_json should look like:
+# {
+#     &quot;managed_tasks&quot;: [
+#         { &quot;name&quot;: &quot;...&quot;, &quot;status&quot;: &quot;...&quot;, &quot;task&quot;: &quot;...&quot;, OTHER KEYS MAYBE },
+#         { &quot;name&quot;: &quot;...&quot;, &quot;status&quot;: &quot;...&quot;, &quot;task&quot;: &quot;...&quot;, OTHER KEYS MAYBE },
+#     ]
+# }
+</code></pre>
+<h3 id="rpc"><code>/rpc</code></h3>
+<p>The <code>rpc</code> endpoint consists of a <code>GET</code> and <code>POST</code> mechanism which allow <strong>managed</strong> <code>Task</code>s to request procedures be done by or information returned from other running <strong>managed</strong> <code>Task</code>s.</p>
+<p>For requesting a procedure, it involves:</p>
+<ul>
+<li><strong>managed</strong> <code>Task</code> 1 will use <code>POST</code> to request something of a target <code>Task</code> 2.</li>
+<li><strong>managed</strong> <code>Task</code> 2 will use <code>GET</code> to see if there is some pending work. It then runs the requested procedure.</li>
+</ul>
+<p>While not the explicit purpose of the endpoint, clever crafting of messages also enables it be used for general IPC.</p>
+<ul>
+<li><strong>managed</strong> <code>Task</code> 1 will use <code>POST</code> to request something of <strong>managed</strong> <code>Task</code> 2.</li>
+<li><strong>managed</strong> <code>Task</code> 2 will use <code>GET</code> to see if any requests are waiting for it.</li>
+<li><strong>managed</strong> <code>Task</code> 2 will use <code>POST</code> to put up a response.</li>
+<li><strong>managed</strong> <code>Task</code> 1 will use <code>GET</code> to read the response.</li>
+</ul>
+<p><code>maestro</code> maintains a queue system to allow work to be scheduled and acknowledged by various processes running in parallel without those processes having to deal with the routing of messages.</p>
+<p>NOTE: This endpoint will be updated to bring terminology inline with the rest of the project. Currently <code>Task</code> is misused here, referring to a <strong>managed</strong> <code>Task</code>. Use caution.</p>
+<h5 id="methods_3">Methods</h5>
+<ul>
+<li><code>GET</code></li>
+<li><code>POST</code></li>
+</ul>
+<h5 id="query-parameters_3">Query Parameters</h5>
+<h6 id="get"><code>GET</code></h6>
+<ul>
+<li><code>?task=XYZ</code> : The <strong>managed</strong> <code>Task</code> for which the message is directed. This information may alternatively be provided in the request body.</li>
+</ul>
+<h6 id="post"><code>POST</code></h6>
+<p>None</p>
+<h5 id="request-body_3">Request Body</h5>
+<h6 id="get_1"><code>GET</code></h6>
+<ul>
+<li><code>{ "task": "..." }</code></li>
+</ul>
+<h6 id="post_1"><code>POST</code></h6>
+<pre><code class="language-json">{
+    &quot;target&quot;: &quot;...&quot;,
+    &quot;message&quot;: &quot;...&quot;
+}
+</code></pre>
+<ul>
+<li>This will queue a message to be processed by the <strong>managed</strong> <code>Task</code> defined in <code>target</code>. The meaning of <code>message</code> is defined by the <strong>managed</strong> <code>Task</code>.</li>
+</ul>
+<h5 id="response_3">Response</h5>
+<h6 id="get_2"><code>GET</code></h6>
+<pre><code class="language-json">{
+    &quot;message&quot;: &quot;output.&quot;
+}
+</code></pre>
+<h6 id="post_2"><code>POST</code></h6>
+<pre><code class="language-json">&quot;Message queued.&quot;
+</code></pre>
+<h5 id="example_3">Example</h5>
+<p><strong>Example 1 - The intended purpose of RPC</strong></p>
+<pre><code class="language-python3">import requests
+
+# From managed Task 1
+
+json_data: Dict[str, str] = {
+    &quot;target&quot;: &quot;Task2Manager&quot;, &quot;message&quot;: &quot;run_cleanup_function&quot;
+}
+resp: requests.models.Response = requests.post(&quot;http://MANAGER_URL/rpc&quot;, json=json_data)
+</code></pre>
+<pre><code class="language-python3"># From managed Task 2
+## Check for messages
+
+resp: requests.models.Response = requests.get(
+    &quot;http://MANAGER_URL/rpc?task=Task2Manager&quot;, json=json_data
+)
+
+## Would generally do error handling and so on, but ignore for now.
+if resp.json()[&quot;message&quot;] == &quot;run_cleanup_function&quot;:
+    run_cleanup_function()
+</code></pre>
+<p><strong>Example 2 - Adapted for more general IPC</strong></p>
+<pre><code class="language-python3">## Use structured messages to allow responses
+## requester includes name in message so answer can be routed back
+
+# From managed Task 1
+json_data: Dict[str, str] = {
+    &quot;target&quot;: &quot;Task2Manager&quot;, &quot;message&quot;: &quot;Task1Manager: What is the answer?&quot;
+}
+resp: requests.models.Response = requests.post(
+    &quot;http://MANAGER_URL/rpc&quot;, json=json_data
+)
+</code></pre>
+<pre><code class="language-python3"># From managed Task 2
+## Check for messages
+resp: requests.models.Response = requests.get(
+    &quot;http://MANAGER_URL/rpc?task=Task2Manager&quot;
+)
+
+## Would generally do error handling and so on, but ignore for now.
+requester_and_request: str = resp.json()[&quot;message&quot;]
+
+requester, request = [item.strip() for item in requester_and_request.split(&quot;:&quot;)]
+
+answer: str = &quot;I don't know&quot;
+if request == &quot;What is the answer&quot;:
+    answer = &quot;42 is the answer&quot;
+
+### Send response back
+json_data: Dict[str, str] = {
+    &quot;target&quot;: requester, &quot;message&quot;: answer
+}
+</code></pre>
+<pre><code class="language-python3"># Finally back to managed Task 1
+resp: requests.models.Response = requests.get(
+    &quot;http://MANAGER_URL/rpc?task=Task1Manager&quot;
+)
+
+## Would generally do error handling and so on, but ignore for now.
+answer: str = resp.json()[&quot;message&quot;]
+print(answer)
+</code></pre>
+<h2 id="jobstep-class"><code>JobStep</code> class</h2>
+<p>The <code>JobStep</code> class is defined in <code>workflows/maestro/src/lwm/job.hh</code>. It provides all information required to run a single step of a workflow. It is reproduced here for convenience.</p>
+<pre><code class="language-c++">  class JobParameters {
+  public:
+    std::string lute_location;
+    std::string executable_subdir;
+    std::string config_file;
+    bool debug;
+  };
+
+  class JobStep {
+  public:
+    JobStep(std::string _task_name,
+            TriggerRule _trigger_rule,
+            JobParameters _parameters,
+            std::string _extra_parameters,
+            std::vector&lt;JobStep&gt; _next)
+      : managed_task_name(_task_name)
+      , trigger_rule(_trigger_rule)
+      , parameters(_parameters)
+      , extra_parameters(_extra_parameters)
+      , next(_next)
+    {}
+
+    std::string managed_task_name;
+    TriggerRule trigger_rule;
+    JobParameters parameters;
+    std::string extra_parameters;
+    std::vector&lt;JobStep&gt; next;
+  };
+</code></pre>
+<p>The following table provides an overview of the uses of the various member fields.
+| Member              | Used                                                                                            |
+|:-------------------:|:------------------------------------------------------------------------------------------------|
+| <code>managed_task_name</code> | The name of the <strong>managed</strong> <code>Task</code> to run.                                                      |
+| <code>trigger_rule</code>      | The trigger rule determining the dependence of this step on those upstreams (see below).        |
+| <code>parameters</code>        | A set of general parameters determining the LUTE installation/clone to use and the config file. |
+| <code>extra_parameters</code>  | A <code>Launcher</code> specific set of parameters. Currently used by the <code>SlurmLauncher</code> for SLURM args.  |
+| <code>next</code>              | A vector of <code>JobStep</code>s to run after this one completes.                                         |</p>
+<h3 id="triggerrule-defining-when-a-step-should-run"><code>TriggerRule</code> - Defining when a step should run</h3>
+<p>The following enum class defines a number of trigger rules that are currently implemented.</p>
+<pre><code class="language-c++">  enum class TriggerRule {
+    ALL_SUCCESS=0,
+    ANY_SUCCESS=1,
+    ALL_COMPLETED=2,
+
+    ALL_FAILED=3,
+    ANY_FAILED=4,
+
+    ALWAYS=5
+  };
+</code></pre>
+<p>In order, these mean:</p>
+<ul>
+<li><code>ALL_SUCCESS</code>: This job step will only be submitted if all previous steps in its branch succeed (This is the default)</li>
+<li><code>ANY_SUCCESS</code>: This job step will be submitted as soon as any previous step in its branch succeed.</li>
+<li><code>ALL_COMPLETED</code>: This job step will be submitted as soon as all previous steps complete, whether they succeed or fail.</li>
+<li><code>ALL_FAILED</code>: This job step will be submitted only if all previous steps have failed.</li>
+<li><code>ANY_FAILED</code>: This job step will be submitted as soon as any previous step fails.</li>
+<li><code>ALWAYS</code>: This job step will always run as soon as it is reached in the DAG.</li>
+</ul>
+<h2 id="launcher-classes"><code>Launcher</code> classes</h2>
+<p>There are currently two <code>Launcher</code> implementations. They are selected via the <code>LauncherType</code> enum passed to the <code>Manager</code>.</p>
+<pre><code class="language-c++">  enum class LauncherType {
+    PythonLauncherType = 0,
+    SlurmLauncherType = 1
+  };
+</code></pre>
+<ul>
+<li>The <code>PythonLauncher</code> runs the job steps directly calling the <code>python</code> interpreter - this is a blocking call.</li>
+<li>The <code>SlurmLauncher</code> submits the <code>submit_slurm</code> batch script to launch the <code>JobStep</code> as a batch job.</li>
+</ul>
+<h3 id="handler-implementations"><code>Handler</code> implementations</h3>
+<p>Side-by-side with the actual <code>Launcher</code> implementations a set of <code>Handler</code>s have been defined that implement the REST API. These are used by both the <code>PythonLauncher</code> and <code>SlurmLauncher</code>.</p>
+<ul>
+<li><code>JsonStatusHandler</code>: Implements the callback for status updates from the <code>Executor</code>.</li>
+<li><code>JsonLogHandler</code>: Implements the callback for log updates from the <code>Executor</code>. If the unbuffered logs option is passed to the launch script then this handler will print log messages as they come in.</li>
+</ul>
+<p>As both <code>Launcher</code> implementations use (and expect) the HTTP server, the <code>m_expects_server</code> bool is set to <code>true</code> for the implementations. Setting this boolean allows the <code>Manager</code> to register the callback handlers with the HTTP server.</p>
+<h2 id="managerparameters-and-manager-creation"><code>ManagerParameters</code> and <code>Manager</code> creation</h2>
+<p>A number of constructors are provided for the <code>Manager</code> class; however, the most complete (and the one accessible via Python bindings) is the one that defines a set of <code>ManagerParameters</code>. This allows for full configuration of the workflow manager. The parameters object is reproduced below.</p>
+<pre><code class="language-c++">  class ManagerParameters {
+  public:
+    /**
+     * Number of threads for the manager. This should probably match the number
+     * of Managed Task's that will run concurrently.
+     */
+    unsigned num_manager_threads{2};
+    /**
+     * Number of threads for the server process. This probably doesn't need to be
+     * very high unless you expect a lot of HTTP traffic.
+     */
+    unsigned num_server_threads{2};
+    /**
+     * Whether to print logs immediately or only at the end of each JobStep by
+     * pulling them from the log file.
+     */
+    bool unbuffered_logs{false};
+
+    /**
+     * HTTP server host IP (usually 0.0.0.0)
+     */
+    std::string host{&quot;0.0.0.0&quot;};
+    /**
+     * HTTP server port.
+     */
+    std::uint16_t port{8080};
+    /**
+     * What kind of job launching to employ (SLURM, Python, etc.)
+     */
+    LauncherType launch_type{LauncherType::PythonLauncherType};
+    /**
+     * Whether the experiment/workflow is LCLS2. This affects the base environment used.
+     */
+    bool is_daq2{false};
+    /**
+     * What the run type is for this experiment run.
+     */
+    std::string run_type{&quot;&quot;};
+  };
+</code></pre>
+<p>The construct then takes an instance of this class:</p>
+<pre><code class="language-c++">Manager::Manager(const ManagerParameters&amp; params);
+</code></pre>
+<h2 id="running-workflows">Running workflows</h2>
+<p>After creating a <code>Manager</code> instance, there are two steps to run a workflow.</p>
+<ul>
+<li>
+<p>First, the <code>queue_workflow</code> member function is called (<code>Manager::queue_workflow(const WfDefinition&amp; wf_defn)</code>)</p>
+</li>
+<li>
+<p><code>WfDefinition</code> is a type alias for <code>std::vector&lt;JobStep&gt;</code></p>
+</li>
+<li>
+<p>After queueing a workflow, the <code>run_workflow</code> function is called.</p>
+</li>
+</ul>
+<h3 id="rough-mechanism">Rough mechanism</h3>
+<p>When the <code>Manager</code> was created, it created a <code>ThreadPool</code> instance in line with the set of parameters passed to the constructor. A <code>Launcher</code> type was also selected. As it recurses through the workflow, it will queue the <code>JobStep</code> objects to the <code>ThreadPool</code> queue to be run using the <code>Launcher::launch_task</code> function.</p>
+<ul>
+<li>Specifically, a lambda is used to to queue the selected <code>Launcher::launch_task</code> into the <code>ThreadPool</code>'s work queue.</li>
+</ul>
+<p>The main function for doing this is <code>Manager::recurse_workflow</code> (in <code>workflows/maestro/src/lwm/manager.cc</code>). It is reproduced below for convenience:</p>
+<pre><code class="language-c++">  void Manager::recurse_workflow(const WfDefinition&amp; wf, MaybeJobFutures_t wait_for=std::nullopt) {
+    auto launch_func = [&amp;](const JobStep &amp;job,
+                           bool is_daq2,
+                           MaybeJobFutures_t wait_for = std::nullopt) -&gt; JobReturn {
+      return m_launcher-&gt;launch_task(job, is_daq2, wait_for);
+    };
+
+    for (const auto&amp; step : wf) {
+      auto next_wait_for = std::shared_future&lt;JobReturn&gt;(m_job_pool.enqueue(launch_func,
+                                                                            step,
+                                                                            m_params.is_daq2,
+                                                                            wait_for));
+      m_all_futures-&gt;push_back(next_wait_for);
+      if (!step.next.empty()) {
+        recurse_workflow(step.next, std::optional&lt;decltype(next_wait_for)&gt;(next_wait_for));
+      }
+    }
+  }
+</code></pre>
+<p>After queueing the work to the <code>ThreadPool</code> queue, the <code>Manager</code> receives a future it can check for job completion. Once all <code>JobStep</code>s are queued, the rest of the <code>run_workflow</code> function consists of a loop checking the set of collected futures for completion.</p>
+<h3 id="python-bindings">Python bindings</h3>
+<p>A number of objects are exposed to Python using the <code>pybind11</code> library. The top-level API provides only a single function which creates the workflow manager and runs a workflow:</p>
+<pre><code class="language-c++">std::string run_workflow(LWM::WfDefinition wf_defn,
+                         LWM::ManagerParameters manager_params) {
+  LWM::Manager manager = LWM::Manager(manager_params);
+  manager.queue_workflow(wf_defn);
+
+  return manager.run_workflow();
+}
+</code></pre>
+<p>How to call this function (and create the manager parameters) from Python can be seen in <code>workflows/maestro/src/maestro/launch_maestro.py</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      © 2024 LCLS
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
