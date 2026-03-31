@@ -87,7 +87,7 @@ def setup_smd2_env() -> Dict[str, str]:
 
     # default_srv_cores: int = 16 * int(nodes)
     # Try to convert above for the case where no nodes were specified explicitly
-    default_srv_cores: int = (int(cores_per_node) // 8 + 1) * int(nodes)
+    default_srv_cores: int = int(nodes)
 
     # Check if the environment has been overridden, otherwise use default value
     srv_cores: int
