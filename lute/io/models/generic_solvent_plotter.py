@@ -49,7 +49,7 @@ class PlotGenericSolventParameters(ThirdPartyParameters):
     )
 
     azint_method: str = Field(
-        "azint",
+        "azav",
         description="Method used for azimuthal integration. Default is smalldata AzimuthalBinning Task.",
         flag_type="--",
         rename_param="azint-method",
