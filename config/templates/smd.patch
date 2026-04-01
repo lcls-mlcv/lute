@@ -90,7 +90,7 @@ index fafbced..1facbd4 100644
  
          # integration arguments
 -        self.pol_factor = kwargs.pop("polarization_factor", 1)
-+        self.pol_factor = kwargs.pop("polarization_factor", -1)  # Vertical Polarization by default post Run 18   
++        self.pol_factor = kwargs.pop("polarization_factor", -1)  # Vertical Polarization by default post Run 18
          self.npts = kwargs.pop("npts", 256)
          self.npts_az = kwargs.pop("npts_az", 360)
          # self.radial_range = kwargs.pop('radial_range',None)
@@ -133,9 +133,9 @@ index fafbced..1facbd4 100644
 -            self.mask = maskImg
 -
 +            self.mask = np.reshape(self.mask, (self.mask.shape[0]*self.mask.shape[1], self.mask.shape[2]))
-+      
++
 +        metrology = get_geometry(det.det.alias)
-+        # instantiate PyFAI detector first 
++        # instantiate PyFAI detector first
 +        # this adds the detector name mentioned in the poni file to pyFAI detector registry
 +        # reading the poni file will not throw an error if the detector name is not in the registry
 +        detector = PsanaToPyFAI.convert(metrology, det.det.alias)

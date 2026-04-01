@@ -48,6 +48,13 @@ class PlotGenericSolventParameters(ThirdPartyParameters):
         rename_param="detname",
     )
 
+    azint_method: str = Field(
+        "azint",
+        description="Method used for azimuthal integration. Default is smalldata AzimuthalBinning Task.",
+        flag_type="--",
+        rename_param="azint-method",
+    )
+
     output_dir: str = Field(
         "",
         description="Path to output files, including output h5 file and png files for "
