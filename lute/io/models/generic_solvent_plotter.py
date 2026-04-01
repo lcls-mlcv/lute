@@ -98,16 +98,23 @@ class PlotGenericSolventParameters(ThirdPartyParameters):
         rename_param="water-q",
     )
 
-    water_peak_sigma: float = Field(
+    water_peak_sigma: Optional[float] = Field(
         None,
         description="Sigma threshold for water peak filtering. A good starting point is 2.0.",
         flag_type="--",
         rename_param="water-peak-sigma",
     )
 
+    num_intensity_bins: Optional[int] = Field(
+        None,
+        description="Number of bins for intensity histogram. Default is 100.",
+        flag_type="--",
+        rename_param="num-intensity-bins",
+    )
+
     num_subsamples: int = Field(
         250,
-        description="Number of subsamples to take. Default is 500.",
+        description="Number of subsamples to take. Default is 250.",
         flag_type="--",
         rename_param="num-subsamples",
     )
@@ -119,7 +126,7 @@ class PlotGenericSolventParameters(ThirdPartyParameters):
         rename_param="offset-idx",
     )
 
-    scan_max_nbins: int = Field(
+    scan_max_nbins: Optional[int] = Field(
         None,
         description="Maximum number of bins for the scan var. Default is None.",
         flag_type="--",
