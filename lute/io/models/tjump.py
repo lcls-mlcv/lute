@@ -47,6 +47,20 @@ class TJumpParameters(ThirdPartyParameters):
         rename_param="input",
     )
 
+    detname: str = Field(
+        "jungfrau",
+        description="Detector name. Default is jungfrau.",
+        flag_type="--",
+        rename_param="detname",
+    )
+
+    azint_method: str = Field(
+        "azav",
+        description="Method used for azimuthal integration. Default is smalldata AzimuthalBinning Task.",
+        flag_type="--",
+        rename_param="azint-method",
+    )
+
     event_codes: Union[List[int], str] = Field(
         [],
         description="List of event codes to use, assumes the first code is laser_on, followed by laser_off1, laser_off2, etc.",
@@ -91,24 +105,6 @@ class TJumpParameters(ThirdPartyParameters):
         flag_type="--",
         rename_param="peakfit",
     )
-    # # Other potential parameters
-    # zscore_threshold: Optional[float] = Field(
-    #     2,
-    #     description="Z-score threshold for filtering",
-    #     flag_type="--",
-    # )
-
-    # qmin: Optional[float] = Field(
-    #     0.3,
-    #     description="Minimum q-range for analysis (optional)",
-    #     flag_type="--",
-    # )
-
-    # qmax: Optional[float] = Field(
-    #     3.2,
-    #     description="Maximum q-range for analysis (optional)",
-    #     flag_type="--",
-    # )
 
     # ====== END PENDING ALEX SCRIPTS ======
     @validator("exp")
