@@ -84,20 +84,6 @@ SmallDataProducer2Test.add_tasklet(
 )
 SmallDataProducer2Test.update_environment(setup_smd2_env)
 
-SmallDataProducerLCLSGeom: Executor = Executor("SubmitSMD")
-"""Runs the production of a LCLS2 smalldata HDF5 file using the LCLSGeom environment."""
-SmallDataProducerLCLSGeom.shell_source(
-    "/sdf/group/lcls/ds/ana/sw/conda2/manage/bin/xpp_drp_cpu.sh"
-)
-SmallDataProducerLCLSGeom.add_tasklet(
-    clone_smalldata,
-    ["{{ producer }}", f"{os.getenv('LUTE_PATH')}/config/templates/smd.patch"],
-    when="before",
-    set_result=False,
-    set_summary=False,
-)
-SmallDataProducerLCLSGeom.update_environment(setup_smd2_env)
-
 SmallDataProducerSpack: Executor = Executor("SubmitSMD")
 """Runs the production of a LCLS2 smalldata HDF5 file using the spack environment."""
 SmallDataProducerSpack.shell_source(
