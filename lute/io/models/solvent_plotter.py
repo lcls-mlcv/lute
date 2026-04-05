@@ -41,6 +41,20 @@ class PlotSolventParameters(ThirdPartyParameters):
         rename_param="data-file",
     )
 
+    detname: str = Field(
+        "jungfrau",
+        description="Detector name. Default is jungfrau.",
+        flag_type="--",
+        rename_param="detname",
+    )
+
+    azint_method: str = Field(
+        "azav",
+        description="Method used for azimuthal integration. Default is smalldata AzimuthalBinning Task.",
+        flag_type="--",
+        rename_param="azint-method",
+    )
+
     event_codes: Union[List[int], str] = Field(
         [],
         description="List of event codes to classify",
