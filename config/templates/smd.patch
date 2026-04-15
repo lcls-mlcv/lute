@@ -315,10 +315,10 @@ index dbd21ac..cd4235c 100755
          .opts(shared_axes=False)
      )
  
-+    hist, bins = np.histogram(imageR.flatten(), bins=1000)
++    hist, bins = np.histogram(imageR.flatten(), bins='auto', range=(np.nanpercentile(imageR, 1.0), np.nanpercentile(imageR, 99.0)))
 +    histDim = hv.Dimension(
 +        ("hist", detImgName.replace("Sums/", "").replace("_calib_img", " Pixel Histogram")),
-+        range=(0, np.nanpercentile(imageR, 99.0)),
++        range=(np.nanpercentile(imageR, 1.0), np.nanpercentile(imageR, 99.0)),
 +    )
 +    detHists.append(
 +        hv.Histogram((hist, bins), kdims=[histDim], label=histDim.label).opts(
