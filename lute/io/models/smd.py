@@ -760,6 +760,7 @@ class AnalyzeSmallDataXESParameters(TaskParameters):
         description="If non-zero load ROIs in batches. Slower but may help OOM errors.",
     )
 
+
 class RunBeamlineSummaryParameters(ThirdPartyParameters):
     """Parameters for running Small Data beamline summary scripts (only for MFX for now).
 
