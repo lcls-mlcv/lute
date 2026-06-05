@@ -210,10 +210,14 @@ def update_dag_params(dag_path: str, partition: str, account: str, nodes: int, n
 
     for line in lines:
         stripped = line.lstrip()
-        # Track the most recent task_name we've seen
+        task_name = None
         if stripped.startswith("task_name:"):
+            task_name = stripped
+        elif stripped.startswith("- task_name:"):
+            task_name = stripped[2:]  # Strip the "- " prefix
+        if task_name is not None:
             # Extract task name (handles both quoted and unquoted)
-            task_value = stripped.split(":", 1)[1].strip().strip("\"'")
+            task_value = task_name.split(":", 1)[1].strip().strip("\"'")
             current_task = task_value
 
         if stripped.startswith("slurm_params:"):
