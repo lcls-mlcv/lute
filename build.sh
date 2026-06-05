@@ -190,7 +190,7 @@ print_banner "${LINES[@]}"
 # Run meson configure/setup if it hasn't be done yet or it has been requested
 # It generally only needs to rerun if install prefix has changed, or meson.build
 # files have been modified.
-if [ ! -d "${BUILD_DIR}" ]; then
+if [ ! -f "${BUILD_DIR}/build.ninja" ]; then
     LINES=("Running meson setup for build configuration")
     print_banner "${LINES[@]}"
     meson setup "${BUILD_DIR}" --prefix="${INSTALL_DIR}" -Dbuildtype=release
