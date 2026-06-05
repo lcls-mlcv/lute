@@ -296,14 +296,16 @@ def main() -> None:
     parser.add_argument(
         "-W",
         "--workflow",
-        type=List[str],
+        type=str,
         nargs="+",
-        help=("Which analysis workflow(s) to run. Defaults to smd."),
-        default=["smd"],
+        action="extend",
+        help="Which analysis workflow(s) to run. E.g. -W smd bayfai.",
     )
     args: argparse.Namespace
     extra_args: List[str]  # May have additional SLURM arguments
     args, extra_args = parser.parse_known_args()
+
+    workflow_names: List[str] = args.workflow if args.workflow else ["smd"]
 
     hutch: str = args.experiment[:3]
 
@@ -426,7 +428,7 @@ def main() -> None:
             sys.exit(0)
 
     workflows: List[Dict[str, str]] = []
-    for wf_name in args.workflow:
+    for wf_name in workflow_names:
         full_workflow_path: str = f"{lute_output_dir}/{wf_name}.dag"
         if not os.path.exists(full_workflow_path):
             included_wf_defn: str = f"{lute_path}/workflows/common/{wf_name}.dag"
