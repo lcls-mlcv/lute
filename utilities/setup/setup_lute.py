@@ -296,9 +296,10 @@ def main() -> None:
     parser.add_argument(
         "-W",
         "--workflow",
-        type=str,
-        help=("Which analysis workflow to run. Defaults to smd_summaries."),
-        default="smd",
+        type=List[str],
+        nargs="+",
+        help=("Which analysis workflow(s) to run. Defaults to smd."),
+        default=["smd"],
     )
     args: argparse.Namespace
     extra_args: List[str]  # May have additional SLURM arguments
@@ -358,18 +359,6 @@ def main() -> None:
     inplace_sed(config_path, sed_pattern)
 
     database_setup(f"{lute_output_dir}/lute.db")  # Setup permissions on database
-    full_workflow_path: str = f"{lute_output_dir}/{args.workflow}.dag"
-    if not os.path.exists(full_workflow_path):
-        included_wf_defn: str = f"{lute_path}/workflows/common/{args.workflow}.dag"
-        shutil.copy(included_wf_defn, full_workflow_path)
-    os.chmod(full_workflow_path, 0o666)
-
-    param_string: str = f"{launch_executable} -c {config_path} -W {full_workflow_path}"
-
-    if args.debug:
-        param_string = f"{param_string} --debug"
-    if args.test:
-        param_string = f"{param_string} --test"
 
     extra_args_str: str = " ".join(extra_args)
     # Check for partition, account and ntasks. ntasks has defaults by workflow
@@ -436,52 +425,48 @@ def main() -> None:
             logger.info("Exiting.")
             sys.exit(0)
 
-    param_string = f"{param_string} {extra_args_str}"
-
-    # Update the DAG file in place with collected SLURM params
-    update_dag_params(full_workflow_path, partition, account, nodes, ntasks_per_node)
-
-    main_workflow: Dict[str, str]
-    # if args.workflow in ("smd_summaries", "smd_xss", "smd_xes", "smd_xss"):
-    if args.workflow in ("smd_summaries", "smd_xss", "smd_xes", "smd_xss"):
-        main_workflow = {
-            "name": f"lute_{args.workflow}",
-            "executable": arp_executable,
-            "trigger": "RUN_PARAM_IS_VALUE",
-            "run_param_name": "SmallData",
-            "run_param_value": "done",
-            "location": "S3DF",
-            "parameters": param_string,
-        }
-    elif args.workflow == "bayfai":
-        main_workflow = {
-            "name": f"lute_{args.workflow}",
-            "executable": arp_executable,
-            "trigger": "MANUAL",
-            "location": "S3DF",
-            "parameters": param_string,
-        }
-    elif 0:
-        # Replace eventually with workflows which use START_OF_RUN
-        main_workflow = {
-            "name": f"lute_{args.workflow}",
-            "executable": arp_executable,
-            "trigger": "START_OF_RUN",
-            "location": "S3DF",
-            "parameters": param_string,
-        }
-    else:
-        main_workflow = {
-            "name": f"lute_{args.workflow}",
-            "executable": arp_executable,
-            "trigger": "END_OF_RUN",
-            "location": "S3DF",
-            "parameters": param_string,
-        }
-
     workflows: List[Dict[str, str]] = []
-    workflows.append(main_workflow)
-    # Will want to append additional auxiliary workflows eventually
+    for wf_name in args.workflow:
+        full_workflow_path: str = f"{lute_output_dir}/{wf_name}.dag"
+        if not os.path.exists(full_workflow_path):
+            included_wf_defn: str = f"{lute_path}/workflows/common/{wf_name}.dag"
+            if not os.path.exists(included_wf_defn):
+                logger.error(
+                    f"Workflow definition not found for workflow: {wf_name}. Skipping workflow."
+                )
+                continue
+            shutil.copy(included_wf_defn, full_workflow_path)
+        os.chmod(full_workflow_path, 0o666)
+
+        param_string: str = f"{launch_executable} -c {config_path} -W {full_workflow_path}"
+        if args.debug:
+            param_string = f"{param_string} --debug"
+        if args.test:
+            param_string = f"{param_string} --test"
+        param_string = f"{param_string} {extra_args_str}"
+
+        # Update the DAG file in place with collected SLURM params
+        update_dag_params(full_workflow_path, partition, account, nodes, ntasks_per_node)
+
+        # Build workflow dict with appropriate trigger
+        if wf_name in ("smd_summaries", "smd_xss", "smd_xes"):
+            trigger_info: Dict[str, str] = {
+                "trigger": "RUN_PARAM_IS_VALUE",
+                "run_param_name": "SmallData",
+                "run_param_value": "done",
+            }
+        elif wf_name == "bayfai":
+            trigger_info = {"trigger": "MANUAL"}
+        else:
+            trigger_info = {"trigger": "END_OF_RUN"}
+
+        workflows.append({
+            "name": f"lute_{wf_name}",
+            "executable": arp_executable,
+            "location": "S3DF",
+            "parameters": param_string,
+            **trigger_info,
+        })
 
     for workflow in workflows:
         logger.info(
