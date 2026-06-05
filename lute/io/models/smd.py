@@ -17,8 +17,8 @@ Classes:
         based on XES difference signal and provide basic XES feedback.
 
     RunBeamlineSummaryParameters(ThirdPartyParameters): Parameters for running
-        Small Data beamline summary scripts (only for MFX for now). This Task 
-        runs the beamline summary scripts for MFX that generate summary plots 
+        Small Data beamline summary scripts (only for MFX for now). This Task
+        runs the beamline summary scripts for MFX that generate summary plots
         for each run based on the Small Data HDF5 files.
 """
 
