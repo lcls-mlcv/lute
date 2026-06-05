@@ -118,6 +118,9 @@ SmallDataXASAnalyzer: MPIExecutor = MPIExecutor("AnalyzeSmallDataXAS")
 SmallDataXESAnalyzer: MPIExecutor = MPIExecutor("AnalyzeSmallDataXES")
 """Process XES results from a Small Data HDF5 file."""
 
+BeamlineSummaryRunner: Executor = Executor("RunBeamlineSummary")
+"""Runs Small Data beamline summary scripts (only for MFX for now)."""
+
 # Geometry
 ##########
 AgBhGeometryOptimizer: MPIExecutor = MPIExecutor("OptimizeAgBhGeometryExhaustive")

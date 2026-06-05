@@ -15,6 +15,11 @@ Classes:
     AnalyzeSmallDataXESParameters(TaskParameters): Parameter model for the
         AnalyzeSmallDataXES Task. Used to determine spatial/temporal overlap
         based on XES difference signal and provide basic XES feedback.
+
+    RunBeamlineSummaryParameters(ThirdPartyParameters): Parameters for running
+        Small Data beamline summary scripts (only for MFX for now). This Task 
+        runs the beamline summary scripts for MFX that generate summary plots 
+        for each run based on the Small Data HDF5 files.
 """
 
 __all__ = [
@@ -22,6 +27,7 @@ __all__ = [
     "AnalyzeSmallDataXSSParameters",
     "AnalyzeSmallDataXASParameters",
     "AnalyzeSmallDataXESParameters",
+    "RunBeamlineSummaryParameters",
 ]
 __author__ = "Gabriel Dorlhiac"
 
@@ -788,4 +794,49 @@ class AnalyzeSmallDataXESParameters(TaskParameters):
     batch_size: int = Field(
         0,
         description="If non-zero load ROIs in batches. Slower but may help OOM errors.",
+    )
+
+
+class RunBeamlineSummaryParameters(ThirdPartyParameters):
+    """Parameters for running Small Data beamline summary scripts (only for MFX for now).
+
+    This task runs the beamline summary scripts for MFX that generate summary plots for each run based on the Small Data HDF5 file.
+    """
+
+    class Config(ThirdPartyParameters.Config):
+        """Identical to super-class Config but includes a result."""
+
+        set_result: bool = False
+        """Whether the Executor should mark a specified parameter as a result."""
+
+    executable: str = Field("python", description="Python executable.", flag_type="")
+    python_script: str = Field(
+        description="Path to the beamline summary Python script",
+        flag_type="",
+    )
+
+    _find_smd_path = validate_smd_path("smd_path")
+
+    smd_path: str = Field(
+        "",
+        description="Path to the Small Data HDF5 file to analyze.",
+        flag_type="--",
+    )
+
+    experiment: str = Field(
+        os.environ.get("EXPERIMENT", ""),
+        description="Experiment Tag.",
+        flag_type="--",
+    )
+
+    run: str = Field(
+        os.environ.get("RUN_NUM", ""),
+        description="DAQ Run Number.",
+        flag_type="--",
+    )
+
+    postElog: bool = Field(
+        False,
+        description="Whether to post summary plots to the eLog. Requires url and credentials in environment variables.",
+        flag_type="--",
     )

@@ -213,9 +213,9 @@ def main() -> None:
         type=str,
         help=(
             "Version of LUTE to use. Corresponds to release tag or `dev`. "
-            "Defaults to `dev`."
+            "Defaults to `dev-mfx`."
         ),
-        default="dev",
+        default="dev-mfx",
     )
     parser.add_argument(
         "-W",
@@ -243,7 +243,7 @@ def main() -> None:
     std_test_config: str
     if args.fresh_install:
         lute_path = f"{results_dir}/lute"
-        git_clone("slac-lcls/lute", lute_path, args.version)
+        git_clone("lcls-mlcv/lute", lute_path, args.version)
         run_build_script(lute_path)
         modify_permissions(lute_path)
         arp_executable = f"{lute_path}/install/bin/submit_launch_slurm.sh"

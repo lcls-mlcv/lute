@@ -34,7 +34,7 @@ index 9f52b00..2b50c9b 100755
              os.environ["JID_UPDATE_COUNTERS"],
              json=[
 diff --git a/smalldata_tools/ana_funcs/azav_pyfai.py b/smalldata_tools/ana_funcs/azav_pyfai.py
-index fafbced..1facbd4 100644
+index fafbced..7444141 100644
 --- a/smalldata_tools/ana_funcs/azav_pyfai.py
 +++ b/smalldata_tools/ana_funcs/azav_pyfai.py
 @@ -5,9 +5,10 @@ try:
@@ -90,7 +90,7 @@ index fafbced..1facbd4 100644
  
          # integration arguments
 -        self.pol_factor = kwargs.pop("polarization_factor", 1)
-+        self.pol_factor = kwargs.pop("polarization_factor", -1)  # Vertical Polarization by default post Run 18
++        self.pol_factor = kwargs.pop("polarization_factor", -1)  # Vertical Polarization by default post Run 18 
          self.npts = kwargs.pop("npts", 256)
          self.npts_az = kwargs.pop("npts_az", 360)
          # self.radial_range = kwargs.pop('radial_range',None)
@@ -204,9 +204,10 @@ index fafbced..1facbd4 100644
                  **self._azav_kwargs,
              )
 -
-             return {"azav": I, "q": q}
+-            return {"azav": I, "q": q}
++            return {"azav": I, "q": q}
 diff --git a/summaries/BeamlineSummaryPlots_mfx.py b/summaries/BeamlineSummaryPlots_mfx.py
-index dbd21ac..12a1b1f 100755
+index dbd21ac..cd4235c 100755
 --- a/summaries/BeamlineSummaryPlots_mfx.py
 +++ b/summaries/BeamlineSummaryPlots_mfx.py
 @@ -125,6 +125,11 @@ logger = logging.getLogger(__name__)
@@ -321,7 +322,7 @@ index dbd21ac..12a1b1f 100755
 +    )
 +    detHists.append(
 +        hv.Histogram((hist, bins), kdims=[histDim], label=histDim.label).opts(
-+            fill_color="#21918c",
++            fill_color="#21918c",  # viridis teal, consistent with image colormap
 +            line_color="black",
 +            line_width=0.2,
 +            alpha=0.85,
