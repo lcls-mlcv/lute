@@ -13,6 +13,24 @@ from typing import List, Dict, Any, Optional
 
 from krtc import KerberosTicket  # type: ignore
 
+DEFAULT_CONFIG = {
+    "SmallDataProducer": {
+        "nodes": 4,
+        "ntasks_per_node": 50,
+    },
+    "SmallDataProducer2": {
+        "nodes": 4,
+        "ntasks_per_node": 50,
+    },
+    "BayFAIOptimizer": {
+        "nodes": 1,
+        "ntasks_per_node": 120,
+    },
+    "BayFAIOptimizer2": {
+        "nodes": 1,
+        "ntasks_per_node": 120,
+    },
+}
 
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
@@ -167,6 +185,60 @@ def modify_permissions(lute_path: str):
         for f in files:
             os.chmod(os.path.join(root, f), 0o765)
 
+def update_dag_params(dag_path: str, partition: str, account: str, nodes: int, ntasks_per_node: int) -> None:
+    """Update slurm_params in a DAG file in place.
+
+    For tasks listed in DEFAULT_CONFIG, use the task-specific nodes/ntasks_per_node.
+    For all other tasks, use the user-provided values.
+
+    Args:
+        dag_path (str): Path to the DAG file.
+
+        partition (str): SLURM partition.
+
+        account (str): SLURM account.
+
+        nodes (int): Number of nodes (used for tasks not in DEFAULT_CONFIG).
+
+        ntasks_per_node (int): Tasks per node (used for tasks not in DEFAULT_CONFIG).
+    """
+    with open(dag_path, "r") as f:
+        lines: List[str] = f.readlines()
+
+    result: List[str] = []
+    current_task: Optional[str] = None
+
+    for line in lines:
+        stripped = line.lstrip()
+        # Track the most recent task_name we've seen
+        if stripped.startswith("task_name:"):
+            # Extract task name (handles both quoted and unquoted)
+            task_value = stripped.split(":", 1)[1].strip().strip("\"'")
+            current_task = task_value
+
+        if stripped.startswith("slurm_params:"):
+            indent = line[: len(line) - len(stripped)]
+            if current_task and current_task in DEFAULT_CONFIG:
+                cfg = DEFAULT_CONFIG[current_task]
+                params = (
+                    f"--account={account} --partition={partition} "
+                    f"--ntasks-per-node={cfg['ntasks_per_node']} "
+                    f"--nodes={cfg['nodes']} --exclusive"
+                )
+            else:
+                params = (
+                    f"--account={account} --partition={partition} "
+                    f"--ntasks-per-node={ntasks_per_node} "
+                    f"--nodes={nodes}"
+                )
+            result.append(f"{indent}slurm_params: '{params}'\n")
+        else:
+            result.append(line)
+
+    with open(dag_path, "w") as f:
+        f.writelines(result)
+
+    logger.info(f"Updated slurm_params in DAG file: {dag_path}")
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -297,19 +369,21 @@ def main() -> None:
 
     extra_args_str: str = " ".join(extra_args)
     # Check for partition, account and ntasks. ntasks has defaults by workflow
+    partition: str = "milano"
     if "partition" not in extra_args_str:
         logger.warning(
-            "No queue/partition provided. Defaulting to milano. Any key to continue. "
+            f"No queue/partition provided. Defaulting to {partition}. Any key to continue. "
             "Ctrl-C to exit."
         )
         try:
             _: str = input()
-            extra_args_str = f"{extra_args_str} --partition=milano"
+            extra_args_str = f"{extra_args_str} --partition={partition}"
         except KeyboardInterrupt:
             logger.info("Exiting.")
             sys.exit(0)
+
+    account: str = f"lcls:{args.experiment}"
     if "account" not in extra_args_str:
-        account: str = f"lcls:{args.experiment}"
         logger.warning(
             f"No account provided. Defaulting to {account}. Any key to continue. "
             "Ctrl-C to exit."
@@ -320,32 +394,54 @@ def main() -> None:
         except KeyboardInterrupt:
             logger.info("Exiting.")
             sys.exit(0)
-    if "ntasks" not in extra_args_str:
-        ncores: int = 120
-        # if args.workflow in ("smd_xas", "smd_xss", "test"):
-        #     ncores = 2
-        # elif args.workflow in ("smd_summaries", "smd_xes"):
-        #     ncores = 5
-        # else:
-        #     ncores = 120
+
+    nodes: int = 1
+    if "nodes" not in extra_args_str:
         logger.warning(
-            f"No tasks/cores provided. Defaulting to {ncores}. Any key to continue. "
+            f"No nodes provided. Defaulting to {nodes}. Any key to continue. "
             "Ctrl-C to exit."
         )
         try:
             _ = input()
-            extra_args_str = f"{extra_args_str} --ntasks={ncores}"
+            extra_args_str = f"{extra_args_str} --nodes={nodes}"
+        except KeyboardInterrupt:
+            logger.info("Exiting.")
+            sys.exit(0)
+
+    ntasks_per_node: int = 1
+    if "ntasks-per-node" not in extra_args_str:
+        logger.warning(
+            f"No ntasks-per-node provided. Defaulting to {ntasks_per_node}. Any key to continue. "
+            "Ctrl-C to exit."
+        )
+        try:
+            _ = input()
+            extra_args_str = f"{extra_args_str} --ntasks-per-node={ntasks_per_node}"
+        except KeyboardInterrupt:
+            logger.info("Exiting.")
+            sys.exit(0)
+    
+    if "exclusive" not in extra_args_str:
+        logger.warning(
+            f"No exclusivity provided. Defaulting to no exclusive access. Any key to continue. "
+            "Ctrl-C to exit."
+        )
+        try:
+            _ = input()
         except KeyboardInterrupt:
             logger.info("Exiting.")
             sys.exit(0)
 
     param_string = f"{param_string} {extra_args_str}"
 
+    # Update the DAG file in place with collected SLURM params
+    update_dag_params(full_workflow_path, partition, account, nodes, ntasks_per_node)
+
     main_workflow: Dict[str, str]
     # if args.workflow in ("smd_summaries", "smd_xss", "smd_xes", "smd_xss"):
     if args.workflow in ("smd_summaries", "smd_xss", "smd_xes", "smd_xss"):
         main_workflow = {
-            "name": "lute_smd_summaries",
+            "name": f"lute_{args.workflow}",
             "executable": arp_executable,
             "trigger": "RUN_PARAM_IS_VALUE",
             "run_param_name": "SmallData",
@@ -355,7 +451,7 @@ def main() -> None:
         }
     elif args.workflow == "bayfai":
         main_workflow = {
-            "name": "lute_bayfai",
+            "name": f"lute_{args.workflow}",
             "executable": arp_executable,
             "trigger": "MANUAL",
             "location": "S3DF",

@@ -226,7 +226,7 @@ AnalyzeSmallDataXSS:
     - "lens_v"
     - "lens_h"
   # Thresholds used for data filtering
-  thresholds:
+  intensity_thresholds:
     min_Iscat: 10           # Minimum integrated scattering intensity
     min_ipm: 500            # Minimum x-ray intensity at selected ipm
 
@@ -247,7 +247,7 @@ AnalyzeSmallDataXAS:
   ccm: "epics/ccm_E"
   ccm_set: "epicsUser/ccm_E_setpoint" # Requested CCM setpoint PV. Makes binning better but not required.
   # Thresholds used for data filtering
-  thresholds:
+  intensity_thresholds:
     min_Iscat: 10           # Minimum integrated scattering intensity
     min_ipm: 500            # Minimum x-ray intensity at selected ipm
   #element: null       # For EXAFS -- currently unused
@@ -266,13 +266,20 @@ AnalyzeSmallDataXES:
     - "lxt"
     - "lxt_fast"
   # Thresholds used for data filtering
-  thresholds:
+  intensity_thresholds:
     min_Iscat: 10           # Minimum integrated scattering intensity
     min_ipm: 1000           # Minimum x-ray intensity at selected ipm
   # Optional settings.
   #invert_xes_axes: false   # Switch projection axis for spectrum. Default projects along 1
   #rot_angle: null          # If not null, rotate images by N degrees before projection
   #batch_size: 0            # If not 0, load images in batches of N. Helps OOM.
+
+RunBeamlineSummary:
+  #python_script: "/path/to/smalldata_tools/summaries/BeamlineSummaryPlots_hutch.py"
+  #smd_path: ""             # Include to analyze ONE specified smalldata file
+  experiment: "{{ $EXPERIMENT }}"
+  run: "{{ $RUN_NUM }}"
+  postElog: True
 
 ###########
 # BayFAI

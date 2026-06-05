@@ -1,0 +1,16 @@
+!LUTE_DAG
+!branch_daq2
+daq2:
+  task_name: "SmallDataProducer2"
+  slurm_params: ""
+  next:
+  - task_name: "SmallDataXESAnalyzer"
+    slurm_params: ""
+    next: []
+daq1:
+  task_name: "SmallDataProducer"
+  slurm_params: ""
+  next:
+  - task_name: "SmallDataXESAnalyzer"
+    slurm_params: ""
+    next: []
