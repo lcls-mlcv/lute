@@ -123,7 +123,7 @@ def run_build_script(lute_path: str) -> None:
 
     cwd: str = os.getcwd()
     os.chdir(lute_path)
-    cmd: List[str] = ["./build.sh"]
+    cmd: List[str] = ["./build.sh -e"]
     logger.info(f"Building LUTE at {lute_path}, this may take a while...")
     _run_subprocess_log(cmd)
     os.chdir(cwd)
@@ -446,7 +446,6 @@ def main() -> None:
             param_string = f"{param_string} --debug"
         if args.test:
             param_string = f"{param_string} --test"
-        param_string = f"{param_string} {extra_args_str}"
 
         # Update the DAG file in place with collected SLURM params
         update_dag_params(full_workflow_path, partition, account, nodes, ntasks_per_node)
@@ -473,7 +472,7 @@ def main() -> None:
 
     for workflow in workflows:
         logger.info(
-            f"Creating eLog workflow named {workflow['name']} with parameters: {workflow['parameters']}"
+            f"Creating eLog workflow for {workflow['name']}\n"
         )
         krbticket: Any = KerberosTicket("HTTP@pswww.slac.stanford.edu")
         krbheaders: dict = krbticket.getAuthHeaders()
