@@ -124,6 +124,7 @@ def run_build_script(lute_path: str) -> None:
     cwd: str = os.getcwd()
     os.chdir(lute_path)
     cmd: List[str] = ["./build.sh"]
+    logger.info(f"Building LUTE at {lute_path}, this may take a while...")
     _run_subprocess_log(cmd)
     os.chdir(cwd)
 
