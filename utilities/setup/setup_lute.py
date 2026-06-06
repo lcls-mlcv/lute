@@ -472,7 +472,7 @@ def main() -> None:
 
     for workflow in workflows:
         logger.info(
-            f"Creating eLog workflow for {workflow['name']}\n"
+            f"Creating eLog workflow for {workflow['name']}"
         )
         krbticket: Any = KerberosTicket("HTTP@pswww.slac.stanford.edu")
         krbheaders: dict = krbticket.getAuthHeaders()
