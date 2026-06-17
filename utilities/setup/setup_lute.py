@@ -441,7 +441,7 @@ def main() -> None:
             shutil.copy(included_wf_defn, full_workflow_path)
         os.chmod(full_workflow_path, 0o666)
 
-        param_string: str = f"{launch_executable} -c {config_path} -W {full_workflow_path}"
+        param_string: str = f"{launch_executable} -c {config_path} -W {full_workflow_path} --partition={partition} --account={account}"
         if args.debug:
             param_string = f"{param_string} --debug"
         if args.test:
