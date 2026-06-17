@@ -8,7 +8,7 @@ import os
 import random
 import socket
 import sys
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from lute.execution.launch import (
     get_base_launch_parser,
@@ -73,6 +73,10 @@ def main():
     run_type, is_daq2 = retrieve_run_info(
         experiment, run_num, jid_authorization, args.type
     )
+    branch_conditions: Dict[str, bool] = {
+        "daq2": is_daq2 if is_daq2 else True,
+        run_type: True,
+    }
 
     bin_dir: str = os.path.dirname(os.path.realpath(sys.argv[0]))
     lute_location: str = os.path.abspath(f"{bin_dir}/..")
@@ -84,6 +88,7 @@ def main():
         config_file=args.config,
         debug=args.debug,
         default_slurm_params=" ".join(extra_args),
+        branch_conditions=branch_conditions,
     )
 
     num_concurrent_steps: int = get_concurrent_job_steps(wf_defn)
