@@ -14,47 +14,141 @@ geometry {
 {% endif -%}
 output {
   output_dir = {{ output_output_dir }}
+  {%- if output_composite_output is defined and output_composite_output is not none %}
   composite_output = {{ output_composite_output }}
+  {%- endif %}
   logging_dir = {{ output_logging_dir }}
+  {%- if output_logging_option is defined and output_logging_option is not none %}
   logging_option = {{ output_logging_option }}
+  {%- endif %}
 }
+{%- if (dispatch_index is defined and dispatch_index is not none) or (dispatch_refine is defined and dispatch_refine is not none) or (dispatch_integrate is defined and dispatch_integrate is not none) or (dispatch_hit_finder_enable is defined and dispatch_hit_finder_enable is not none) or (dispatch_hit_finder_minimum_number_of_reflections is defined and dispatch_hit_finder_minimum_number_of_reflections is not none) or (dispatch_hit_finder_maximum_number_of_reflections is defined and dispatch_hit_finder_maximum_number_of_reflections is not none) %}
 dispatch {
+  {%- if dispatch_index is defined and dispatch_index is not none %}
   index = {{ dispatch_index }}
+  {%- endif %}
+  {%- if dispatch_refine is defined and dispatch_refine is not none %}
   refine = {{ dispatch_refine }}
+  {%- endif %}
+  {%- if dispatch_integrate is defined and dispatch_integrate is not none %}
   integrate = {{ dispatch_integrate }}
+  {%- endif %}
+  {%- if (dispatch_hit_finder_enable is defined and dispatch_hit_finder_enable is not none) or (dispatch_hit_finder_minimum_number_of_reflections is defined and dispatch_hit_finder_minimum_number_of_reflections is not none) or (dispatch_hit_finder_maximum_number_of_reflections is defined and dispatch_hit_finder_maximum_number_of_reflections is not none) %}
+  hit_finder {
+    {%- if dispatch_hit_finder_enable is defined and dispatch_hit_finder_enable is not none %}
+    enable = {{ dispatch_hit_finder_enable }}
+    {%- endif %}
+    {%- if dispatch_hit_finder_minimum_number_of_reflections is defined and dispatch_hit_finder_minimum_number_of_reflections is not none %}
+    minimum_number_of_reflections = {{ dispatch_hit_finder_minimum_number_of_reflections }}
+    {%- endif %}
+    {%- if dispatch_hit_finder_maximum_number_of_reflections is defined and dispatch_hit_finder_maximum_number_of_reflections is not none %}
+    maximum_number_of_reflections = {{ dispatch_hit_finder_maximum_number_of_reflections }}
+    {%- endif %}
+  }
+  {%- endif %}
 }
+{%- endif %}
 mp {
   method = {{ mp_method }}
 }
+{%- if (radial_average_enable is defined and radial_average_enable is not none) or (radial_average_two_theta_low is defined and radial_average_two_theta_low is not none) or (radial_average_two_theta_high is defined and radial_average_two_theta_high is not none) or (radial_average_verbose is defined and radial_average_verbose is not none) or (radial_average_output_bins is defined and radial_average_output_bins is not none) or (radial_average_show_plots is defined and radial_average_show_plots is not none) or (radial_average_mask is defined and radial_average_mask is not none) %}
+radial_average {
+  {%- if radial_average_enable is defined and radial_average_enable is not none %}
+  enable = {{ radial_average_enable }}
+  {%- endif %}
+  {%- if radial_average_two_theta_low is defined and radial_average_two_theta_low is not none %}
+  two_theta_low = {{ radial_average_two_theta_low }}
+  {%- endif %}
+  {%- if radial_average_two_theta_high is defined and radial_average_two_theta_high is not none %}
+  two_theta_high = {{ radial_average_two_theta_high }}
+  {%- endif %}
+  {%- if radial_average_verbose is defined and radial_average_verbose is not none %}
+  verbose = {{ radial_average_verbose }}
+  {%- endif %}
+  {%- if radial_average_output_bins is defined and radial_average_output_bins is not none %}
+  output_bins = {{ radial_average_output_bins }}
+  {%- endif %}
+  {%- if radial_average_show_plots is defined and radial_average_show_plots is not none %}
+  show_plots = {{ radial_average_show_plots }}
+  {%- endif %}
+  {%- if radial_average_mask is defined and radial_average_mask is not none %}
+  mask = {{ radial_average_mask }}
+  {%- endif %}
+}
+{%- endif %}
 spotfinder {
   lookup {
     mask = {{ spotfinder_lookup_mask }}
   }
   threshold {
+    {%- if spotfinder_threshold_algorithm == "dispersion" %}
+    algorithm = *dispersion dispersion_extended radial_profile
+    {%- elif spotfinder_threshold_algorithm == "dispersion_extended" %}
+    algorithm = dispersion *dispersion_extended radial_profile
+    {%- elif spotfinder_threshold_algorithm == "radial_profile" %}
+    algorithm = dispersion dispersion_extended *radial_profile
+    {%- endif %}
     dispersion {
+      {%- if spotfinder_threshold_dispersion_gain is defined and spotfinder_threshold_dispersion_gain is not none %}
       gain = {{ spotfinder_threshold_dispersion_gain }}
+      {%- endif %}
+      {%- if spotfinder_threshold_dispersion_sigma_bkgnd is defined and spotfinder_threshold_dispersion_sigma_bkgnd is not none %}
       sigma_background = {{ spotfinder_threshold_dispersion_sigma_bkgnd }}
-      sigma_strong = {{ spotfinder_threshold_dispersion_sigma_strong}}
+      {%- endif %}
+      {%- if spotfinder_threshold_dispersion_sigma_strong is defined and spotfinder_threshold_dispersion_sigma_strong is not none %}
+      sigma_strong = {{ spotfinder_threshold_dispersion_sigma_strong }}
+      {%- endif %}
+      {%- if spotfinder_threshold_dispersion_global_threshold is defined and spotfinder_threshold_dispersion_global_threshold is not none %}
       global_threshold = {{ spotfinder_threshold_dispersion_global_threshold }}
+      {%- endif %}
+      {%- if spotfinder_threshold_dispersion_kernel_size is defined and spotfinder_threshold_dispersion_kernel_size is not none %}
       kernel_size = {{ spotfinder_threshold_dispersion_kernel_size }}
+      {%- endif %}
     }
   }
   filter {
+    {%- if spotfinder_filter_min_spot_size is defined and spotfinder_filter_min_spot_size is not none %}
     min_spot_size = {{ spotfinder_filter_min_spot_size }}
+    {%- endif %}
+    {%- if spotfinder_filter_d_min is defined and spotfinder_filter_d_min is not none %}
     d_min = {{ spotfinder_filter_d_min }}
+    {%- endif %}
+    {%- if spotfinder_filter_max_spot_size is defined and spotfinder_filter_max_spot_size is not none %}
+    max_spot_size = {{ spotfinder_filter_max_spot_size }}
+    {%- endif %}
   }
 }
 indexing {
+  {%- if (indexing_stills_refine_candidates_with_known_symmetry is defined and indexing_stills_refine_candidates_with_known_symmetry is not none) or (indexing_stills_refine_all_candidates is defined and indexing_stills_refine_all_candidates is not none) %}
   stills {
+    {%- if indexing_stills_refine_candidates_with_known_symmetry is defined and indexing_stills_refine_candidates_with_known_symmetry is not none %}
     refine_candidates_with_known_symmetry = {{ indexing_stills_refine_candidates_with_known_symmetry }}
+    {%- endif %}
+    {%- if indexing_stills_refine_all_candidates is defined and indexing_stills_refine_all_candidates is not none %}
     refine_all_candidates = {{ indexing_stills_refine_all_candidates }}
+    {%- endif %}
   }
+  {%- endif %}
   known_symmetry {
     space_group = {{ indexing_known_symmetry_space_group if indexing_known_symmetry_space_group else "None" }}
     unit_cell = {{ indexing_known_symmetry_unit_cell if indexing_known_symmetry_unit_cell else "None" }}
   }
+  {%- if indexing_refinement_protocol_d_min_start is defined and indexing_refinement_protocol_d_min_start is not none %}
+  refinement_protocol {
+    d_min_start = {{ indexing_refinement_protocol_d_min_start }}
+  }
+  {%- endif %}
+  {%- if indexing_multiple_lattice_search_max_lattices is defined and indexing_multiple_lattice_search_max_lattices is not none %}
+  multiple_lattice_search {
+    max_lattices = {{ indexing_multiple_lattice_search_max_lattices }}
+  }
+  {%- endif %}
 }
 integration {
+  lookup {
+    mask = {{ integration_lookup_mask }}
+  }
+  {%- if integration_background_simple_outlier_plane_n_sigma is defined and integration_background_simple_outlier_plane_n_sigma is not none %}
   background {
     simple {
       outlier {
@@ -64,19 +158,26 @@ integration {
       }
     }
   }
+  {%- endif %}
+  {%- if integration_summation_detector_gain is defined and integration_summation_detector_gain is not none %}
   summation {
     detector_gain = {{ integration_summation_detector_gain }}
   }
+  {%- endif %}
 }
+{%- if profile_gaussian_rs_centroid_definition is defined and profile_gaussian_rs_centroid_definition is not none %}
 profile {
   gaussian_rs {
     centroid_definition = {{ profile_gaussian_rs_centroid_definition }}
   }
 }
+{%- endif %}
+{%- if refinement_reflections_outlier_algorithm is defined and refinement_reflections_outlier_algorithm is not none %}
 refinement {
   reflections {
     outlier {
-      algorithm = {{ refinement_reflections_outlier_algorithm if refinement_reflections_outlier_algorithm else "None" }}
+      algorithm = {{ refinement_reflections_outlier_algorithm }}
     }
   }
 }
+{%- endif %}
