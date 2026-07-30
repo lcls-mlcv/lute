@@ -262,37 +262,54 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
                 "ScaleCCTBXXFEL output stored in the LUTE database."
             ),
         )
-        input_experiments_suffix: str = Field(
-            "_integrated.expt",
-            description="Suffix used to find experiment files.",
-        )
-        input_reflections_suffix: str = Field(
-            "_integrated.refl",
-            description="Suffix used to find reflection files.",
-        )
-        input_parallel_file_load_method: str = Field(
-            "uniform",  # *uniform node_memory
+        input_experiments_suffix: Optional[str] = Field(
+            None,
             description=(
-                "How to distribute input files across MPI ranks. "
-                "'uniform' = equal files per rank; 'node_memory' = memory-aware."
+                "Suffix used to find experiment files. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of '_integrated.expt') unless explicitly set."
+            ),
+        )
+        input_reflections_suffix: Optional[str] = Field(
+            None,
+            description=(
+                "Suffix used to find reflection files. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of '_integrated.refl') unless explicitly set."
+            ),
+        )
+        input_parallel_file_load_method: Optional[str] = Field(
+            None,
+            description=(
+                "How to distribute input files across MPI ranks: 'uniform' "
+                "(equal files per rank) or 'node_memory' (memory-aware). "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'uniform') unless "
+                "explicitly set."
             ),
         )
 
         # Filtering settings: filter_
-        filter_algorithm: str = Field(
-            "unit_cell",
+        filter_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "Filtering strategy to apply. Space-separated list of: "
                 "n_obs, resolution, unit_cell, energy. "
-                "E.g. 'n_obs resolution unit_cell' to apply multiple filters."
+                "E.g. 'n_obs resolution unit_cell' to apply multiple filters. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of no filtering at all) "
+                "unless explicitly set."
             ),
         )
-        filter_unit_cell_algorithm: str = Field(
-            "value",
+        filter_unit_cell_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "Unit cell filtering method: 'range', 'value', or 'cluster'. "
                 "'value' uses explicit tolerances around a target cell. "
-                "'cluster' uses a Mahalanobis distance covariance model."
+                "'cluster' uses a Mahalanobis distance covariance model. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'value') unless "
+                "explicitly set."
             ),
         )
         # filter.unit_cell.value parameters
@@ -300,28 +317,37 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             None,
             description=(
                 "Target unit cell for value-based filtering. "
-                "E.g. '78 78 39 90 90 90'. If None, taken from scaling model."
+                "E.g. '78 78 39 90 90 90'. Omitted from the rendered phil "
+                "(falling back to cctbx.xfel.merge's own default of 'Auto', "
+                "derived from the scaling model's PDB/MTZ header) unless "
+                "explicitly set."
             ),
         )
-        filter_unit_cell_value_relative_length_tolerance: float = Field(
-            0.03,
+        filter_unit_cell_value_relative_length_tolerance: Optional[float] = Field(
+            None,
             description=(
                 "Fractional tolerance on unit cell lengths for value-based "
-                "filtering. E.g. 0.03 = 3% tolerance."
+                "filtering. E.g. 0.03 = 3% tolerance. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of 0.1) unless explicitly set."
             ),
         )
-        filter_unit_cell_value_absolute_angle_tolerance: float = Field(
-            2.0,
+        filter_unit_cell_value_absolute_angle_tolerance: Optional[float] = Field(
+            None,
             description=(
                 "Absolute tolerance on cell angles in degrees for "
-                "value-based filtering."
+                "value-based filtering. Omitted from the rendered phil "
+                "(falling back to cctbx.xfel.merge's own default of 2.0) "
+                "unless explicitly set."
             ),
         )
         filter_unit_cell_value_target_space_group: Optional[str] = Field(
             None,
             description=(
                 "Target space group for value-based unit cell filtering. "
-                "If None, taken from scaling model."
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'Auto', derived from the "
+                "scaling model's PDB/MTZ header) unless explicitly set."
             ),
         )
         # filter.unit_cell.cluster parameters
@@ -333,36 +359,50 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
                 "Leave empty to skip cluster filtering."
             ),
         )
-        filter_unit_cell_cluster_covariance_component: int = Field(
-            0,
-            description="Which covariance component to use for cluster filtering.",
-        )
-        filter_unit_cell_cluster_covariance_mahalanobis: float = Field(
-            5.0,
-            description="Mahalanobis distance cutoff for unit cell outlier rejection.",
-        )
-        filter_outlier_min_corr: float = Field(
-            -1.0,
+        filter_unit_cell_cluster_covariance_component: Optional[int] = Field(
+            None,
             description=(
-                "Minimum per-image correlation with merged data. Images below "
-                "this threshold are rejected. -1.0 = no filtering (recommended "
-                "for first-pass; tighten to e.g. 0.1 after initial merge)."
+                "Which covariance component to use for cluster filtering. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 0) unless explicitly set."
+            ),
+        )
+        filter_unit_cell_cluster_covariance_mahalanobis: Optional[float] = Field(
+            None,
+            description=(
+                "Mahalanobis distance cutoff for unit cell outlier rejection. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 4.0) unless explicitly set."
+            ),
+        )
+        filter_outlier_min_corr: Optional[float] = Field(
+            None,
+            description=(
+                "Minimum per-image correlation with merged data. Images "
+                "below this threshold are rejected. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of 0.1) unless explicitly set."
             ),
         )
 
         # Selection settings: select_
-        select_algorithm: str = Field(
-            "significance_filter",
+        select_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "Per-reflection selection method. Space-separated list of: "
-                "panel, cspad_sensor, significance_filter, isolation_forest."
+                "panel, cspad_sensor, significance_filter, isolation_forest. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of no selection filtering "
+                "at all) unless explicitly set."
             ),
         )
-        select_significance_filter_sigma: float = Field(
-            0.1,
+        select_significance_filter_sigma: Optional[float] = Field(
+            None,
             description=(
                 "Remove high-resolution bins until all accepted bins have "
-                "<I/sigma> >= this value."
+                "<I/sigma> >= this value. Omitted from the rendered phil "
+                "(falling back to cctbx.xfel.merge's own default of 0.5) "
+                "unless explicitly set."
             ),
         )
 
@@ -375,13 +415,16 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
                 "scaling without an external reference."
             ),
         )
-        scaling_algorithm: str = Field(
-            "mark0",
+        scaling_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "Scaling algorithm: 'mark0' = per-image scaling against "
                 "a reference (requires scaling_model or internal model). "
                 "'mark1' = no scaling / Monte Carlo averaging "
-                "(requires scaling_unit_cell and scaling_space_group)."
+                "(requires scaling_unit_cell and scaling_space_group). "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'mark0') unless "
+                "explicitly set."
             ),
         )
         scaling_unit_cell: Optional[str] = Field(
@@ -398,31 +441,42 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
                 "E.g. 'P43212'. Required when scaling_algorithm=mark1."
             ),
         )
-        scaling_resolution_scalar: float = Field(
-            0.993420862158964,
+        scaling_resolution_scalar: Optional[float] = Field(
+            None,
             description=(
                 "Scale merging.d_min by this factor to capture reflections "
-                "at the edge of the detector resolution."
+                "at the edge of the detector resolution. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of 0.969) unless explicitly set."
             ),
         )
 
         # Post-refinement: postrefinement_
-        postrefinement_enable: bool = Field(
-            True,
-            description="Enable per-image post-refinement (recommended).",
-        )
-        postrefinement_algorithm: str = Field(
-            "rs",
+        postrefinement_enable: Optional[bool] = Field(
+            None,
             description=(
-                "Post-refinement algorithm: 'rs' (reciprocal space), "
-                "'rs2', 'rs_hybrid' (use analytical derivatives), or 'eta_deff'."
+                "Enable per-image post-refinement. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of True) unless explicitly set."
             ),
         )
-        postrefinement_target_weighting: str = Field(
-            "unit",
+        postrefinement_algorithm: Optional[str] = Field(
+            None,
+            description=(
+                "Post-refinement algorithm: 'rs' (reciprocal space), "
+                "'rs2', 'rs_hybrid' (use analytical derivatives), or "
+                "'eta_deff'. Omitted from the rendered phil (falling back "
+                "to cctbx.xfel.merge's own default of 'rs') unless "
+                "explicitly set."
+            ),
+        )
+        postrefinement_target_weighting: Optional[str] = Field(
+            None,
             description=(
                 "Residual weighting in post-refinement: 'unit', 'variance', "
-                "'gentle' (|I|/sigma^2, often best), or 'extreme'."
+                "'gentle' (|I|/sigma^2, often best), or 'extreme'. Omitted "
+                "from the rendered phil (falling back to cctbx.xfel.merge's "
+                "own default of 'unit') unless explicitly set."
             ),
         )
 
@@ -431,8 +485,10 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             3.0,
             description=(
                 "High-resolution cutoff in Angstroms. "
-                "Always set this explicitly — the merge will produce empty "
-                "output without it."
+                "Always set this explicitly — cctbx.xfel.merge's own "
+                "default is unset (None), which produces empty output. "
+                "Unlike other fields here, there is no safe value to fall "
+                "back to, so this one stays required."
             ),
         )
         merging_d_max: Optional[float] = Field(
@@ -442,59 +498,94 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
                 "Mainly affects CCiso statistics. None = no cutoff."
             ),
         )
-        merging_merge_anomalous: bool = Field(
-            False,
+        merging_merge_anomalous: Optional[bool] = Field(
+            None,
             description=(
-                "If True, merge Bijvoet (Friedel) pairs. "
-                "Keep False for SAD/MAD experiments to preserve anomalous signal."
+                "If True, merge Bijvoet (Friedel) pairs. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of False) unless explicitly set."
             ),
         )
-        merging_set_average_unit_cell: bool = Field(
-            True,
+        merging_set_average_unit_cell: Optional[bool] = Field(
+            None,
             description=(
                 "Apply the data's average unit cell to all crystals before "
-                "merging. Recommended."
+                "merging. Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of True) unless explicitly "
+                "set."
             ),
         )
-        merging_minimum_multiplicity: int = Field(
-            2,
-            description="Minimum redundancy required to output a merged reflection.",
-        )
-        merging_include_multiplicity_column: bool = Field(
-            False,
-            description="Write redundancy as a separate column in the output MTZ.",
-        )
-        merging_error_model: str = Field(
-            "ev11",
+        merging_minimum_multiplicity: Optional[int] = Field(
+            None,
             description=(
-                "Error model: 'ha14', 'ev11' (Evans 2011, default), "
-                "'mm24' (Mittan-Moreau 2024), or 'errors_from_sample_residuals'."
+                "Minimum redundancy required to output a merged reflection. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 2) unless explicitly set."
             ),
         )
-        merging_error_ev11_minimizer: str = Field(
-            "lbfgs",
-            description="Minimizer for ev11 error model: 'lbfgs' or 'LevMar'.",
+        merging_include_multiplicity_column: Optional[bool] = Field(
+            None,
+            description=(
+                "Write redundancy as a separate column in the output MTZ. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of False) unless explicitly "
+                "set."
+            ),
+        )
+        merging_error_model: Optional[str] = Field(
+            None,
+            description=(
+                "Error model: 'ha14', 'ev11' (Evans 2011), "
+                "'mm24' (Mittan-Moreau 2024), or 'errors_from_sample_residuals'. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'ev11') unless "
+                "explicitly set."
+            ),
+        )
+        merging_error_ev11_minimizer: Optional[str] = Field(
+            None,
+            description=(
+                "Minimizer for ev11 error model: 'lbfgs' or 'LevMar'. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'lbfgs') unless "
+                "explicitly set."
+            ),
         )
 
         # Statistics: statistics_
-        statistics_n_bins: int = Field(
-            20,
-            description="Number of resolution shells for statistics output.",
+        statistics_n_bins: Optional[int] = Field(
+            None,
+            description=(
+                "Number of resolution shells for statistics output. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 10) unless explicitly "
+                "set."
+            ),
         )
-        statistics_report_ML: bool = Field(
-            True,
-            description="Report per-frame maximum-likelihood statistics.",
+        statistics_report_ML: Optional[bool] = Field(
+            None,
+            description=(
+                "Report per-frame maximum-likelihood statistics. Omitted "
+                "from the rendered phil (falling back to cctbx.xfel.merge's "
+                "own default of True) unless explicitly set."
+            ),
         )
         statistics_cciso_mtz_file: str = Field(
             "",
             description=(
                 "Reference MTZ file for CC-iso / R-iso calculation. "
-                "Recommended if a reference structure is available."
+                "Recommended if a reference structure is available. Leave "
+                "empty to skip."
             ),
         )
-        statistics_cciso_mtz_column_F: str = Field(
-            "F",
-            description="Column name in the CCiso reference MTZ for structure factors.",
+        statistics_cciso_mtz_column_F: Optional[str] = Field(
+            None,
+            description=(
+                "Column name in the CCiso reference MTZ for structure "
+                "factors. Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'fobs') unless "
+                "explicitly set."
+            ),
         )
 
         # Output settings: output_
@@ -510,41 +601,62 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             "",
             description="Temporary file directory. Defaults to output_output_dir.",
         )
-        output_do_timing: bool = Field(
-            True,
-            description="Log elapsed time for each pipeline step.",
-        )
-        output_log_level: int = Field(
-            0,
-            description="Log verbosity: 0 = log everything; higher = less logging.",
-        )
-        output_save_experiments_and_reflections: bool = Field(
-            True,
+        output_do_timing: Optional[bool] = Field(
+            None,
             description=(
-                "Save the filtered/selected experiment and reflection files "
-                "alongside MTZ output. Needed as input for a subsequent "
-                "merging-only run."
+                "Log elapsed time for each pipeline step. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of False) unless explicitly set."
+            ),
+        )
+        output_log_level: Optional[int] = Field(
+            None,
+            description=(
+                "Log verbosity: 0 = log everything; higher = less logging. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 1) unless explicitly set."
+            ),
+        )
+        output_save_experiments_and_reflections: Optional[bool] = Field(
+            None,
+            description=(
+                "Save the filtered/selected experiment and reflection "
+                "files alongside MTZ output. Only needed if a subsequent "
+                "merging-only run will read this Merge task's own output "
+                "(unusual - Merge is normally the last stage). Omitted from "
+                "the rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of False) unless explicitly set."
             ),
         )
 
         # Multiprocessing: mp_
-        mp_method: str = Field(
-            "mpi",
-            description="Multiprocessing method. Only 'mpi' is currently supported.",
-        )
-        mp_psana2_mode: bool = Field(
-            False,
+        mp_method: Optional[str] = Field(
+            None,
             description=(
-                "Set True when using the integrate worker with psana2/XTC2 data."
+                "Multiprocessing method. Omitted from the rendered phil "
+                "(falling back to cctbx.xfel.merge's own default of 'mpi') "
+                "unless explicitly set."
+            ),
+        )
+        mp_psana2_mode: Optional[bool] = Field(
+            None,
+            description=(
+                "Set True when using the integrate worker with psana2/XTC2 "
+                "data. Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of False) unless explicitly "
+                "set."
             ),
         )
 
         # Parallel (MPI memory): parallel_
-        parallel_a2a: int = Field(
-            1,
+        parallel_a2a: Optional[int] = Field(
+            None,
             description=(
-                "MPI all-to-all communication stride. Set to number of cores "
-                "per node (e.g. 64) to reduce memory pressure on large jobs."
+                "MPI all-to-all communication stride. Set to number of "
+                "cores per node (e.g. 64) to reduce memory pressure on "
+                "large jobs. Omitted from the rendered phil (falling back "
+                "to cctbx.xfel.merge's own default of 1) unless explicitly "
+                "set."
             ),
         )
 
@@ -660,54 +772,88 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
                 "Accepts a single path string or a list for multi-run scaling."
             ),
         )
-        input_experiments_suffix: str = Field(
-            "_integrated.expt",
-            description="Suffix used to find experiment files.",
-        )
-        input_reflections_suffix: str = Field(
-            "_integrated.refl",
-            description="Suffix used to find reflection files.",
-        )
-        input_parallel_file_load_method: str = Field(
-            "uniform",
+        input_experiments_suffix: Optional[str] = Field(
+            None,
             description=(
-                "How to distribute input files across MPI ranks. "
-                "'uniform' = equal files per rank; 'node_memory' = memory-aware."
+                "Suffix used to find experiment files. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of '_integrated.expt') unless explicitly set."
+            ),
+        )
+        input_reflections_suffix: Optional[str] = Field(
+            None,
+            description=(
+                "Suffix used to find reflection files. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of '_integrated.refl') unless explicitly set."
+            ),
+        )
+        input_parallel_file_load_method: Optional[str] = Field(
+            None,
+            description=(
+                "How to distribute input files across MPI ranks: 'uniform' "
+                "(equal files per rank) or 'node_memory' (memory-aware). "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'uniform') unless "
+                "explicitly set."
             ),
         )
 
         # Filtering settings: filter_
-        filter_algorithm: str = Field(
-            "unit_cell",
+        filter_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "Filtering strategy. Space-separated list of: "
-                "n_obs, resolution, unit_cell, energy."
+                "n_obs, resolution, unit_cell, energy. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of no filtering at all) unless explicitly set."
             ),
         )
-        filter_unit_cell_algorithm: str = Field(
-            "value",
+        filter_unit_cell_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "Unit cell filtering method: 'range', 'value', or 'cluster'. "
-                "'value' uses explicit tolerances around a target cell."
+                "'value' uses explicit tolerances around a target cell. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'value') unless "
+                "explicitly set."
             ),
         )
         filter_unit_cell_value_target_unit_cell: Optional[str] = Field(
             None,
             description=(
-                "Target unit cell for value-based filtering. E.g. '78 78 39 90 90 90'."
+                "Target unit cell for value-based filtering. E.g. "
+                "'78 78 39 90 90 90'. Omitted from the rendered phil "
+                "(falling back to cctbx.xfel.merge's own default of "
+                "'Auto', derived from the scaling model's PDB/MTZ header) "
+                "unless explicitly set."
             ),
         )
-        filter_unit_cell_value_relative_length_tolerance: float = Field(
-            0.03,
-            description="Fractional tolerance on unit cell lengths (e.g. 0.03 = 3%).",
+        filter_unit_cell_value_relative_length_tolerance: Optional[float] = Field(
+            None,
+            description=(
+                "Fractional tolerance on unit cell lengths (e.g. 0.03 = "
+                "3%). Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 0.1) unless explicitly "
+                "set."
+            ),
         )
-        filter_unit_cell_value_absolute_angle_tolerance: float = Field(
-            2.0,
-            description="Absolute tolerance on cell angles in degrees.",
+        filter_unit_cell_value_absolute_angle_tolerance: Optional[float] = Field(
+            None,
+            description=(
+                "Absolute tolerance on cell angles in degrees. Omitted "
+                "from the rendered phil (falling back to cctbx.xfel.merge's "
+                "own default of 2.0) unless explicitly set."
+            ),
         )
         filter_unit_cell_value_target_space_group: Optional[str] = Field(
             None,
-            description="Target space group for value-based unit cell filtering.",
+            description=(
+                "Target space group for value-based unit cell filtering. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'Auto', derived from "
+                "the scaling model's PDB/MTZ header) unless explicitly set."
+            ),
         )
         filter_unit_cell_cluster_covariance_file: str = Field(
             "",
@@ -716,32 +862,51 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
                 "Leave empty to skip cluster filtering."
             ),
         )
-        filter_unit_cell_cluster_covariance_component: int = Field(
-            0,
-            description="Which covariance component to use.",
-        )
-        filter_unit_cell_cluster_covariance_mahalanobis: float = Field(
-            5.0,
-            description="Mahalanobis distance cutoff for unit cell outlier rejection.",
-        )
-        filter_outlier_min_corr: float = Field(
-            -1.0,
+        filter_unit_cell_cluster_covariance_component: Optional[int] = Field(
+            None,
             description=(
-                "Minimum per-image correlation with merged data. -1.0 = no filtering."
+                "Which covariance component to use. Omitted from the "
+                "rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of 0) unless explicitly set."
+            ),
+        )
+        filter_unit_cell_cluster_covariance_mahalanobis: Optional[float] = Field(
+            None,
+            description=(
+                "Mahalanobis distance cutoff for unit cell outlier "
+                "rejection. Omitted from the rendered phil (falling back "
+                "to cctbx.xfel.merge's own default of 4.0) unless "
+                "explicitly set."
+            ),
+        )
+        filter_outlier_min_corr: Optional[float] = Field(
+            None,
+            description=(
+                "Minimum per-image correlation with merged data. Omitted "
+                "from the rendered phil (falling back to cctbx.xfel.merge's "
+                "own default of 0.1) unless explicitly set."
             ),
         )
 
         # Selection settings: select_
-        select_algorithm: str = Field(
-            "significance_filter",
+        select_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "Per-reflection selection. Space-separated list of: "
-                "panel, cspad_sensor, significance_filter, isolation_forest."
+                "panel, cspad_sensor, significance_filter, isolation_forest. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of no selection filtering "
+                "at all) unless explicitly set."
             ),
         )
-        select_significance_filter_sigma: float = Field(
-            0.1,
-            description="Minimum <I/sigma> for a reflection to be included.",
+        select_significance_filter_sigma: Optional[float] = Field(
+            None,
+            description=(
+                "Minimum <I/sigma> for a reflection to be included. "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 0.5) unless explicitly "
+                "set."
+            ),
         )
 
         # Scaling settings: scaling_
@@ -752,12 +917,15 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
                 "Leave empty for internal KB/Wilson scaling."
             ),
         )
-        scaling_algorithm: str = Field(
-            "mark0",
+        scaling_algorithm: Optional[str] = Field(
+            None,
             description=(
                 "'mark0' = per-image scaling against reference. "
                 "'mark1' = no scaling / Monte Carlo averaging "
-                "(requires scaling_unit_cell and scaling_space_group)."
+                "(requires scaling_unit_cell and scaling_space_group). "
+                "Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 'mark0') unless "
+                "explicitly set."
             ),
         )
         scaling_unit_cell: Optional[str] = Field(
@@ -774,22 +942,34 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
                 "E.g. 'P43212'. Required when algorithm=mark1."
             ),
         )
-        scaling_resolution_scalar: float = Field(
-            0.993420862158964,
-            description="Scale merging.d_min by this factor to extend resolution reach.",
+        scaling_resolution_scalar: Optional[float] = Field(
+            None,
+            description=(
+                "Scale merging.d_min by this factor to extend resolution "
+                "reach. Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of 0.969) unless explicitly "
+                "set."
+            ),
         )
 
         # Merging resolution: required by xfel.merge even in scaling-only mode
         merging_d_min: float = Field(
             3.0,
             description=(
-                "High-resolution cutoff in Angstroms. "
-                "Required even in scaling-only mode."
+                "High-resolution cutoff in Angstroms. Required even in "
+                "scaling-only mode — cctbx.xfel.merge's own default is "
+                "unset (None), which produces empty output. Unlike other "
+                "fields here, there is no safe value to fall back to, so "
+                "this one stays required."
             ),
         )
-        merging_merge_anomalous: bool = Field(
-            False,
-            description="If True, merge Bijvoet pairs.",
+        merging_merge_anomalous: Optional[bool] = Field(
+            None,
+            description=(
+                "If True, merge Bijvoet pairs. Omitted from the rendered "
+                "phil (falling back to cctbx.xfel.merge's own default of "
+                "False) unless explicitly set."
+            ),
         )
 
         # Output settings: output_
@@ -808,27 +988,57 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
         output_save_experiments_and_reflections: bool = Field(
             True,
             description=(
-                "Save scaled experiment and reflection files. "
-                "Must be True for the output to be usable by CCTBXMerger."
+                "Save scaled experiment and reflection files. Must stay "
+                "True — cctbx.xfel.merge's own default is False, which "
+                "would produce no output for CCTBXMerger to read. Unlike "
+                "other fields here, there is no safe value to fall back "
+                "to, so this one stays required."
             ),
         )
-        output_do_timing: bool = Field(True, description="Log elapsed time per step.")
-        output_log_level: int = Field(0, description="Log verbosity (0=verbose).")
+        output_do_timing: Optional[bool] = Field(
+            None,
+            description=(
+                "Log elapsed time per step. Omitted from the rendered "
+                "phil (falling back to cctbx.xfel.merge's own default of "
+                "False) unless explicitly set."
+            ),
+        )
+        output_log_level: Optional[int] = Field(
+            None,
+            description=(
+                "Log verbosity (0=verbose). Omitted from the rendered "
+                "phil (falling back to cctbx.xfel.merge's own default of "
+                "1) unless explicitly set."
+            ),
+        )
 
         # Statistics
-        statistics_n_bins: int = Field(
-            20,
-            description="Number of resolution shells for statistics.",
+        statistics_n_bins: Optional[int] = Field(
+            None,
+            description=(
+                "Number of resolution shells for statistics. Omitted from "
+                "the rendered phil (falling back to cctbx.xfel.merge's own "
+                "default of 10) unless explicitly set."
+            ),
         )
 
         # Multiprocessing
-        mp_method: str = Field(
-            "mpi",
-            description="Multiprocessing method. Only 'mpi' is currently supported.",
+        mp_method: Optional[str] = Field(
+            None,
+            description=(
+                "Multiprocessing method. Omitted from the rendered phil "
+                "(falling back to cctbx.xfel.merge's own default of "
+                "'mpi') unless explicitly set."
+            ),
         )
-        mp_psana2_mode: bool = Field(
-            False,
-            description="Set True when using the integrate worker with psana2/XTC2 data.",
+        mp_psana2_mode: Optional[bool] = Field(
+            None,
+            description=(
+                "Set True when using the integrate worker with psana2/XTC2 "
+                "data. Omitted from the rendered phil (falling back to "
+                "cctbx.xfel.merge's own default of False) unless explicitly "
+                "set."
+            ),
         )
 
         @validator("input_path", always=True, pre=True)

@@ -7,96 +7,184 @@ input {
   {% for p in input_path -%}
   path = {{ p }}
   {% endfor -%}
+  {%- if input_experiments_suffix is defined and input_experiments_suffix is not none %}
   experiments_suffix = {{ input_experiments_suffix }}
+  {%- endif %}
+  {%- if input_reflections_suffix is defined and input_reflections_suffix is not none %}
   reflections_suffix = {{ input_reflections_suffix }}
+  {%- endif %}
+  {%- if input_parallel_file_load_method is defined and input_parallel_file_load_method is not none %}
   parallel_file_load {
     method = {{ input_parallel_file_load_method }}
   }
+  {%- endif %}
 }
+{%- if (mp_method is defined and mp_method is not none) or (mp_psana2_mode is defined and mp_psana2_mode is not none) %}
 mp {
+  {%- if mp_method is defined and mp_method is not none %}
   method = {{ mp_method }}
+  {%- endif %}
+  {%- if mp_psana2_mode is defined and mp_psana2_mode is not none %}
   psana2_mode = {{ mp_psana2_mode }}
+  {%- endif %}
 }
+{%- endif %}
+{%- if (filter_algorithm is defined and filter_algorithm is not none) or (filter_unit_cell_algorithm is defined and filter_unit_cell_algorithm is not none) or (filter_unit_cell_value_target_unit_cell is defined and filter_unit_cell_value_target_unit_cell is not none) or (filter_unit_cell_value_relative_length_tolerance is defined and filter_unit_cell_value_relative_length_tolerance is not none) or (filter_unit_cell_value_absolute_angle_tolerance is defined and filter_unit_cell_value_absolute_angle_tolerance is not none) or (filter_unit_cell_value_target_space_group is defined and filter_unit_cell_value_target_space_group is not none) or (filter_unit_cell_cluster_covariance_file) or (filter_outlier_min_corr is defined and filter_outlier_min_corr is not none) %}
 filter {
+  {%- if filter_algorithm is defined and filter_algorithm is not none %}
   algorithm = {{ filter_algorithm }}
+  {%- endif %}
+  {%- if (filter_unit_cell_algorithm is defined and filter_unit_cell_algorithm is not none) or (filter_unit_cell_value_target_unit_cell is defined and filter_unit_cell_value_target_unit_cell is not none) or (filter_unit_cell_value_relative_length_tolerance is defined and filter_unit_cell_value_relative_length_tolerance is not none) or (filter_unit_cell_value_absolute_angle_tolerance is defined and filter_unit_cell_value_absolute_angle_tolerance is not none) or (filter_unit_cell_value_target_space_group is defined and filter_unit_cell_value_target_space_group is not none) or (filter_unit_cell_cluster_covariance_file) %}
   unit_cell {
+    {%- if filter_unit_cell_algorithm is defined and filter_unit_cell_algorithm is not none %}
     algorithm = {{ filter_unit_cell_algorithm }}
+    {%- endif %}
+    {%- if (filter_unit_cell_value_target_unit_cell is defined and filter_unit_cell_value_target_unit_cell is not none) or (filter_unit_cell_value_relative_length_tolerance is defined and filter_unit_cell_value_relative_length_tolerance is not none) or (filter_unit_cell_value_absolute_angle_tolerance is defined and filter_unit_cell_value_absolute_angle_tolerance is not none) or (filter_unit_cell_value_target_space_group is defined and filter_unit_cell_value_target_space_group is not none) %}
     value {
-      target_unit_cell = {{ filter_unit_cell_value_target_unit_cell if filter_unit_cell_value_target_unit_cell else "Auto" }}
+      {%- if filter_unit_cell_value_target_unit_cell is defined and filter_unit_cell_value_target_unit_cell is not none %}
+      target_unit_cell = {{ filter_unit_cell_value_target_unit_cell }}
+      {%- endif %}
+      {%- if filter_unit_cell_value_relative_length_tolerance is defined and filter_unit_cell_value_relative_length_tolerance is not none %}
       relative_length_tolerance = {{ filter_unit_cell_value_relative_length_tolerance }}
+      {%- endif %}
+      {%- if filter_unit_cell_value_absolute_angle_tolerance is defined and filter_unit_cell_value_absolute_angle_tolerance is not none %}
       absolute_angle_tolerance = {{ filter_unit_cell_value_absolute_angle_tolerance }}
-      target_space_group = {{ filter_unit_cell_value_target_space_group if filter_unit_cell_value_target_space_group else "Auto" }}
+      {%- endif %}
+      {%- if filter_unit_cell_value_target_space_group is defined and filter_unit_cell_value_target_space_group is not none %}
+      target_space_group = {{ filter_unit_cell_value_target_space_group }}
+      {%- endif %}
     }
+    {%- endif %}
     {%- if filter_unit_cell_algorithm == "cluster" and filter_unit_cell_cluster_covariance_file %}
     cluster {
       covariance {
         file = {{ filter_unit_cell_cluster_covariance_file }}
+        {%- if filter_unit_cell_cluster_covariance_component is defined and filter_unit_cell_cluster_covariance_component is not none %}
         component = {{ filter_unit_cell_cluster_covariance_component }}
+        {%- endif %}
+        {%- if filter_unit_cell_cluster_covariance_mahalanobis is defined and filter_unit_cell_cluster_covariance_mahalanobis is not none %}
         mahalanobis = {{ filter_unit_cell_cluster_covariance_mahalanobis }}
+        {%- endif %}
       }
     }
     {%- endif %}
   }
+  {%- endif %}
+  {%- if filter_outlier_min_corr is defined and filter_outlier_min_corr is not none %}
   outlier {
     min_corr = {{ filter_outlier_min_corr }}
   }
+  {%- endif %}
 }
+{%- endif %}
+{%- if (select_algorithm is defined and select_algorithm is not none) or (select_significance_filter_sigma is defined and select_significance_filter_sigma is not none) %}
 select {
+  {%- if select_algorithm is defined and select_algorithm is not none %}
   algorithm = {{ select_algorithm }}
+  {%- endif %}
+  {%- if select_significance_filter_sigma is defined and select_significance_filter_sigma is not none %}
   significance_filter {
     sigma = {{ select_significance_filter_sigma }}
   }
+  {%- endif %}
 }
+{%- endif %}
 scaling {
-  model = {{ scaling_model }}
+  model = {{ scaling_model if scaling_model else "None" }}
+  {%- if scaling_algorithm is defined and scaling_algorithm is not none %}
   algorithm = {{ scaling_algorithm }}
+  {%- endif %}
   {%- if scaling_unit_cell is defined and scaling_unit_cell %}
   unit_cell = {{ scaling_unit_cell }}
   {%- endif %}
   {%- if scaling_space_group is defined and scaling_space_group %}
   space_group = {{ scaling_space_group }}
   {%- endif %}
+  {%- if scaling_resolution_scalar is defined and scaling_resolution_scalar is not none %}
   resolution_scalar = {{ scaling_resolution_scalar }}
+  {%- endif %}
 }
+{%- if (postrefinement_enable is defined and postrefinement_enable is not none) or (postrefinement_algorithm is defined and postrefinement_algorithm is not none) or (postrefinement_target_weighting is defined and postrefinement_target_weighting is not none) %}
 postrefinement {
+  {%- if postrefinement_enable is defined and postrefinement_enable is not none %}
   enable = {{ postrefinement_enable }}
+  {%- endif %}
+  {%- if postrefinement_algorithm is defined and postrefinement_algorithm is not none %}
   algorithm = {{ postrefinement_algorithm }}
+  {%- endif %}
+  {%- if postrefinement_target_weighting is defined and postrefinement_target_weighting is not none %}
   target_weighting = {{ postrefinement_target_weighting }}
+  {%- endif %}
 }
+{%- endif %}
 merging {
   d_min = {{ merging_d_min }}
   {%- if merging_d_max is defined and merging_d_max %}
   d_max = {{ merging_d_max }}
   {%- endif %}
+  {%- if merging_merge_anomalous is defined and merging_merge_anomalous is not none %}
   merge_anomalous = {{ merging_merge_anomalous }}
+  {%- endif %}
+  {%- if merging_set_average_unit_cell is defined and merging_set_average_unit_cell is not none %}
   set_average_unit_cell = {{ merging_set_average_unit_cell }}
+  {%- endif %}
+  {%- if merging_minimum_multiplicity is defined and merging_minimum_multiplicity is not none %}
   minimum_multiplicity = {{ merging_minimum_multiplicity }}
+  {%- endif %}
+  {%- if merging_include_multiplicity_column is defined and merging_include_multiplicity_column is not none %}
   include_multiplicity_column = {{ merging_include_multiplicity_column }}
+  {%- endif %}
+  {%- if (merging_error_model is defined and merging_error_model is not none) or (merging_error_ev11_minimizer is defined and merging_error_ev11_minimizer is not none) %}
   error {
+    {%- if merging_error_model is defined and merging_error_model is not none %}
     model = {{ merging_error_model }}
+    {%- endif %}
+    {%- if merging_error_ev11_minimizer is defined and merging_error_ev11_minimizer is not none %}
     ev11 {
       minimizer = {{ merging_error_ev11_minimizer }}
     }
+    {%- endif %}
   }
+  {%- endif %}
 }
+{%- if (statistics_n_bins is defined and statistics_n_bins is not none) or (statistics_report_ML is defined and statistics_report_ML is not none) or (statistics_cciso_mtz_file) or (statistics_cciso_mtz_column_F is defined and statistics_cciso_mtz_column_F is not none) %}
 statistics {
+  {%- if statistics_n_bins is defined and statistics_n_bins is not none %}
   n_bins = {{ statistics_n_bins }}
+  {%- endif %}
+  {%- if statistics_report_ML is defined and statistics_report_ML is not none %}
   report_ML = {{ statistics_report_ML }}
+  {%- endif %}
+  {%- if (statistics_cciso_mtz_file) or (statistics_cciso_mtz_column_F is defined and statistics_cciso_mtz_column_F is not none) %}
   cciso {
-    mtz_file = {{ statistics_cciso_mtz_file if statistics_cciso_mtz_file else "None" }}
+    {%- if statistics_cciso_mtz_file %}
+    mtz_file = {{ statistics_cciso_mtz_file }}
+    {%- endif %}
+    {%- if statistics_cciso_mtz_column_F is defined and statistics_cciso_mtz_column_F is not none %}
     mtz_column_F = {{ statistics_cciso_mtz_column_F }}
+    {%- endif %}
   }
+  {%- endif %}
 }
+{%- endif %}
 output {
-  prefix = {{ output_prefix }}
+  prefix = {{ output_prefix if output_prefix else "None" }}
   output_dir = {{ output_output_dir }}
   {%- if output_tmp_dir is defined and output_tmp_dir %}
   tmp_dir = {{ output_tmp_dir }}
   {%- endif %}
+  {%- if output_do_timing is defined and output_do_timing is not none %}
   do_timing = {{ output_do_timing }}
+  {%- endif %}
+  {%- if output_log_level is defined and output_log_level is not none %}
   log_level = {{ output_log_level }}
+  {%- endif %}
+  {%- if output_save_experiments_and_reflections is defined and output_save_experiments_and_reflections is not none %}
   save_experiments_and_reflections = {{ output_save_experiments_and_reflections }}
+  {%- endif %}
 }
+{%- if parallel_a2a is defined and parallel_a2a is not none %}
 parallel {
   a2a = {{ parallel_a2a }}
 }
+{%- endif %}
