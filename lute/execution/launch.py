@@ -140,6 +140,31 @@ def get_base_launch_parser(description: str) -> argparse.ArgumentParser:
         type=str,
         default="",
     )
+    parser.add_argument(
+        "--tag",
+        type=str,
+        default=None,
+        required=False,
+        help=(
+            "Submit against every run tagged with this eLog tag instead of a "
+            "single -r/--run. Workflow DAG nodes marked `run_dependent: false` "
+            "run once, over all tagged runs; nodes marked `run_dependent: true` "
+            "(the default) run once per tagged run. Takes precedence over "
+            "-r/--run and RUN_NUM if both are provided."
+        ),
+    )
+    parser.add_argument(
+        "--max-concurrent-runs",
+        type=int,
+        default=None,
+        required=False,
+        help=(
+            "With --tag, the maximum number of tagged runs to submit "
+            "concurrently for the run-dependent stage. Default is unbounded "
+            "(all resolved runs submitted at once) - set this from the "
+            "experiment's actual node/core allocation budget."
+        ),
+    )
     return parser
 
 

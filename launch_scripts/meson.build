@@ -12,10 +12,13 @@ install_data(
 
 py_sources = [
     '__init__.py',
+    'dag_partition.py',
     'launch_airflow.py',
     'launch_prefect.py',
     'launch_slurm_v1.py',
+    'resolve_tag.py',
     'submit_slurm.py',
+    'tagged_launch.py',
 ]
 
 py3.install_sources(

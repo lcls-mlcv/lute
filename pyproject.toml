@@ -109,6 +109,7 @@ launch_airflow = "launch_scripts.launch_airflow:main"
 launch_prefect = "launch_scripts.launch_prefect:main"
 launch_slurm = "launch_scripts.launch_maestro:main"
 submit_slurm = "launch_scripts.submit_slurm:main"
+lute_resolve_tag = "launch_scripts.resolve_tag:main"
 ## *** NOTE: The following are in different packages in installed directories vs repo
 ## I.e. utilties -> lute_utilities
 setup_lute = "lute_utilities.setup.setup_lute:main"
