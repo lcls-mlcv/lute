@@ -267,7 +267,7 @@ Xtc2Writer.shell_source("/sdf/group/lcls/ds/ana/sw/conda2/manage/bin/psconda.sh"
 #########
 CheetahRunner: Executor = Executor("RunCheetah")
 """Run Cheetah task."""
-CheetahRunner.shell_source("/sdf/group/lcls/ds/tools/om/setup-om.sh")
+CheetahRunner.shell_source("/sdf/group/lcls/ds/tools/om/setup/setup-psana2.sh")
 
 # BayFAI
 #######
