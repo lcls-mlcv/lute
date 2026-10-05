@@ -672,10 +672,7 @@ class RunCheetahParameters(ThirdPartyParameters):
 
         file_name_base: str = f"{out_dir}/{prefix}"
         img_list_file_name: str = f"{out_dir}/{prefix}_images.lst"
-        if not os.path.exists(out_dir):
-            raise RuntimeError(
-                f"Must have an output directory! {out_dir} does not exist!"
-            )
+        os.makedirs(out_dir, exist_ok=True)
         with open(img_list_file_name, "w") as img_list_file:
             for i in range(1, n_processes):
                 img_list_file.write(f"{file_name_base}_{i}.{extension}\n")
