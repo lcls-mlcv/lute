@@ -46,15 +46,15 @@ class MergePartialatorParameters(ThirdPartyParameters):
         """Whether the Executor should mark a specified parameter as a result."""
 
     executable: str = Field(
-        "/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/partialator",
+        default="/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/partialator",
         description="CrystFEL's Partialator binary.",
         flag_type="",
     )
     in_file: Optional[str] = Field(
-        "", description="Path to input stream.", flag_type="-", rename_param="i"
+        default="", description="Path to input stream.", flag_type="-", rename_param="i"
     )
     out_file: str = Field(
-        "",
+        default="",
         description="Path to output file.",
         flag_type="-",
         rename_param="o",
@@ -83,12 +83,14 @@ class MergePartialatorParameters(ThirdPartyParameters):
         rename_param="no-deltacchalf",
     )
     model: str = Field(
-        "unity",
+        default="unity",
         description="Partiality model. Options: xsphere, unity, offset, ggpm.",
         flag_type="--",
     )
     nthreads: int = Field(
-        max(int(os.environ.get("SLURM_NPROCS", len(os.sched_getaffinity(0)))) - 1, 1),
+        default=max(
+            int(os.environ.get("SLURM_NPROCS", len(os.sched_getaffinity(0)))) - 1, 1
+        ),
         description="Number of parallel analyses.",
         flag_type="-",
         rename_param="j",
@@ -113,7 +115,7 @@ class MergePartialatorParameters(ThirdPartyParameters):
         rename_param="min-res",
     )
     min_measurements: int = Field(
-        2,
+        default=2,
         description="Include a reflection only if it appears a minimum number of times.",
         flag_type="--",
         rename_param="min-measurements",
@@ -124,13 +126,13 @@ class MergePartialatorParameters(ThirdPartyParameters):
         rename_param="push-res",
     )
     start_after: int = Field(
-        0,
+        default=0,
         description="Ignore the first n crystals.",
         flag_type="--",
         rename_param="start-after",
     )
     stop_after: int = Field(
-        0,
+        default=0,
         description="Stop after processing n crystals. 0 means process all.",
         flag_type="--",
         rename_param="stop-after",
@@ -146,19 +148,19 @@ class MergePartialatorParameters(ThirdPartyParameters):
         rename_param="custom-split",
     )
     max_rel_B: float = Field(
-        100,
+        default=100,
         description="Reject crystals if |relB| > n sq Angstroms.",
         flag_type="--",
         rename_param="max-rel-B",
     )
     output_every_cycle: bool = Field(
-        False,
+        default=False,
         description="Write per-crystal params after every refinement cycle.",
         flag_type="--",
         rename_param="output-every-cycle",
     )
     no_logs: bool = Field(
-        False,
+        default=False,
         description="Do not write logs needed for plots, maps and graphs.",
         flag_type="--",
         rename_param="no-logs",
@@ -237,7 +239,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # dispatch: controls which pipeline steps run
         dispatch_step_list: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Override the list of pipeline steps (space-separated). "
                 "Default (None) runs the full pipeline: "
@@ -254,7 +256,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # input settings: input_
         input_path: Union[str, List[str]] = Field(
-            "",
+            default="",
             description=(
                 "Path(s) to directory containing integrated/scaled data. "
                 "Accepts a single path string or a list of paths for "
@@ -263,7 +265,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         input_experiments_suffix: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Suffix used to find experiment files. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -271,7 +273,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         input_reflections_suffix: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Suffix used to find reflection files. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -279,7 +281,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         input_parallel_file_load_method: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "How to distribute input files across MPI ranks: 'uniform' "
                 "(equal files per rank) or 'node_memory' (memory-aware). "
@@ -291,7 +293,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Filtering settings: filter_
         filter_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Filtering strategy to apply. Space-separated list of: "
                 "n_obs, resolution, unit_cell, energy. "
@@ -302,7 +304,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Unit cell filtering method: 'range', 'value', or 'cluster'. "
                 "'value' uses explicit tolerances around a target cell. "
@@ -314,7 +316,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
         )
         # filter.unit_cell.value parameters
         filter_unit_cell_value_target_unit_cell: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Target unit cell for value-based filtering. "
                 "E.g. '78 78 39 90 90 90'. Omitted from the rendered phil "
@@ -324,7 +326,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_value_relative_length_tolerance: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Fractional tolerance on unit cell lengths for value-based "
                 "filtering. E.g. 0.03 = 3% tolerance. Omitted from the "
@@ -333,7 +335,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_value_absolute_angle_tolerance: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Absolute tolerance on cell angles in degrees for "
                 "value-based filtering. Omitted from the rendered phil "
@@ -342,7 +344,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_value_target_space_group: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Target space group for value-based unit cell filtering. "
                 "Omitted from the rendered phil (falling back to "
@@ -352,7 +354,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
         )
         # filter.unit_cell.cluster parameters
         filter_unit_cell_cluster_covariance_file: str = Field(
-            "",
+            default="",
             description=(
                 "Path to unit cell covariance file for cluster filtering. "
                 "Must be generated by a prior CCTBX clustering run. "
@@ -360,7 +362,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_cluster_covariance_component: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Which covariance component to use for cluster filtering. "
                 "Omitted from the rendered phil (falling back to "
@@ -368,7 +370,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_cluster_covariance_mahalanobis: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Mahalanobis distance cutoff for unit cell outlier rejection. "
                 "Omitted from the rendered phil (falling back to "
@@ -376,7 +378,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_outlier_min_corr: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Minimum per-image correlation with merged data. Images "
                 "below this threshold are rejected. Omitted from the "
@@ -387,7 +389,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Selection settings: select_
         select_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Per-reflection selection method. Space-separated list of: "
                 "panel, cspad_sensor, significance_filter, isolation_forest. "
@@ -397,7 +399,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         select_significance_filter_sigma: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Remove high-resolution bins until all accepted bins have "
                 "<I/sigma> >= this value. Omitted from the rendered phil "
@@ -408,7 +410,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Scaling settings: scaling_
         scaling_model: str = Field(
-            "",
+            default="",
             description=(
                 "Path to a reference PDB or MTZ file for absolute scaling "
                 "(mark0 algorithm). Leave empty to use internal KB/Wilson "
@@ -416,7 +418,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         scaling_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Scaling algorithm: 'mark0' = per-image scaling against "
                 "a reference (requires scaling_model or internal model). "
@@ -428,21 +430,21 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         scaling_unit_cell: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Unit cell for mark1 scaling (no reference model). "
                 "E.g. '78 78 39 90 90 90'. Required when scaling_algorithm=mark1."
             ),
         )
         scaling_space_group: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Space group for mark1 scaling (no reference model). "
                 "E.g. 'P43212'. Required when scaling_algorithm=mark1."
             ),
         )
         scaling_resolution_scalar: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Scale merging.d_min by this factor to capture reflections "
                 "at the edge of the detector resolution. Omitted from the "
@@ -453,7 +455,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Post-refinement: postrefinement_
         postrefinement_enable: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Enable per-image post-refinement. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -461,7 +463,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         postrefinement_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Post-refinement algorithm: 'rs' (reciprocal space), "
                 "'rs2', 'rs_hybrid' (use analytical derivatives), or "
@@ -471,7 +473,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         postrefinement_target_weighting: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Residual weighting in post-refinement: 'unit', 'variance', "
                 "'gentle' (|I|/sigma^2, often best), or 'extreme'. Omitted "
@@ -482,7 +484,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Merging: merging_
         merging_d_min: float = Field(
-            3.0,
+            default=3.0,
             description=(
                 "High-resolution cutoff in Angstroms. "
                 "Always set this explicitly — cctbx.xfel.merge's own "
@@ -492,14 +494,14 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         merging_d_max: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Low-resolution cutoff in Angstroms. "
                 "Mainly affects CCiso statistics. None = no cutoff."
             ),
         )
         merging_merge_anomalous: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "If True, merge Bijvoet (Friedel) pairs. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -507,7 +509,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         merging_set_average_unit_cell: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Apply the data's average unit cell to all crystals before "
                 "merging. Omitted from the rendered phil (falling back to "
@@ -516,7 +518,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         merging_minimum_multiplicity: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Minimum redundancy required to output a merged reflection. "
                 "Omitted from the rendered phil (falling back to "
@@ -524,7 +526,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         merging_include_multiplicity_column: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Write redundancy as a separate column in the output MTZ. "
                 "Omitted from the rendered phil (falling back to "
@@ -533,7 +535,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         merging_error_model: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Error model: 'ha14', 'ev11' (Evans 2011), "
                 "'mm24' (Mittan-Moreau 2024), or 'errors_from_sample_residuals'. "
@@ -543,7 +545,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         merging_error_ev11_minimizer: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Minimizer for ev11 error model: 'lbfgs' or 'LevMar'. "
                 "Omitted from the rendered phil (falling back to "
@@ -554,7 +556,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Statistics: statistics_
         statistics_n_bins: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Number of resolution shells for statistics output. "
                 "Omitted from the rendered phil (falling back to "
@@ -563,7 +565,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         statistics_report_ML: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Report per-frame maximum-likelihood statistics. Omitted "
                 "from the rendered phil (falling back to cctbx.xfel.merge's "
@@ -571,7 +573,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         statistics_cciso_mtz_file: str = Field(
-            "",
+            default="",
             description=(
                 "Reference MTZ file for CC-iso / R-iso calculation. "
                 "Recommended if a reference structure is available. Leave "
@@ -579,7 +581,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         statistics_cciso_mtz_column_F: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Column name in the CCiso reference MTZ for structure "
                 "factors. Omitted from the rendered phil (falling back to "
@@ -590,19 +592,19 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Output settings: output_
         output_prefix: str = Field(
-            "",
+            default="",
             description="Prefix for all output file names (e.g. 'myexp_r0042').",
         )
         output_output_dir: str = Field(
-            "",
+            default="",
             description="Directory for output MTZ and log files.",
         )
         output_tmp_dir: str = Field(
-            "",
+            default="",
             description="Temporary file directory. Defaults to output_output_dir.",
         )
         output_do_timing: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Log elapsed time for each pipeline step. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -610,7 +612,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         output_log_level: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Log verbosity: 0 = log everything; higher = less logging. "
                 "Omitted from the rendered phil (falling back to "
@@ -618,7 +620,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         output_save_experiments_and_reflections: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Save the filtered/selected experiment and reflection "
                 "files alongside MTZ output. Only needed if a subsequent "
@@ -631,7 +633,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Multiprocessing: mp_
         mp_method: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Multiprocessing method. Omitted from the rendered phil "
                 "(falling back to cctbx.xfel.merge's own default of 'mpi') "
@@ -639,7 +641,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         mp_psana2_mode: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Set True when using the integrate worker with psana2/XTC2 "
                 "data. Omitted from the rendered phil (falling back to "
@@ -650,7 +652,7 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
 
         # Parallel (MPI memory): parallel_
         parallel_a2a: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "MPI all-to-all communication stride. Set to number of "
                 "cores per node (e.g. 64) to reduce memory pressure on "
@@ -684,27 +686,27 @@ class MergeCCTBXXFELParameters(ThirdPartyParameters):
     _set_phil_template_parameters = template_parameter_validator("phil_parameters")
 
     executable: str = Field(
-        "/sdf/group/lcls/ds/tools/cctbx/psana2/conda_base_psana2/bin/mpirun",
+        default="/sdf/group/lcls/ds/tools/cctbx/psana2/conda_base_psana2/bin/mpirun",
         description="MPI executable.",
         flag_type="",
     )
     cctbx_executable: str = Field(
-        "/sdf/group/lcls/ds/tools/cctbx/psana2/build/bin/cctbx.xfel.merge",
+        default="/sdf/group/lcls/ds/tools/cctbx/psana2/build/bin/cctbx.xfel.merge",
         description="CCTBX merge program.",
         flag_type="",
     )
     phil_file: str = Field(
-        "",
+        default="",
         description="Location of the input settings ('phil') file.",
         flag_type="",
     )
     phil_parameters: Optional[PhilParameters] = Field(
-        None,
+        default=None,
         description="Optional template parameters to fill in a CCTBX phil file.",
         flag_type="",  # Does nothing since always None by time it's seen by Task
     )
     lute_template_cfg: TemplateConfig = Field(
-        TemplateConfig(
+        default=TemplateConfig(
             template_name="cctbx_merge.phil",
             output_path="",
         ),
@@ -752,7 +754,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # dispatch: controls which pipeline steps run
         dispatch_step_list: str = Field(
-            (
+            default=(
                 "input balance model_scaling modify filter scale postrefine "
                 "statistics_unitcell statistics_beam model_statistics "
                 "statistics_resolution"
@@ -765,7 +767,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # input settings: input_
         input_path: Union[str, List[str]] = Field(
-            "",
+            default="",
             description=(
                 "Path(s) to directory containing integrated data "
                 "(*_integrated.expt / *_integrated.refl). "
@@ -773,7 +775,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         input_experiments_suffix: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Suffix used to find experiment files. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -781,7 +783,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         input_reflections_suffix: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Suffix used to find reflection files. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -789,7 +791,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         input_parallel_file_load_method: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "How to distribute input files across MPI ranks: 'uniform' "
                 "(equal files per rank) or 'node_memory' (memory-aware). "
@@ -801,7 +803,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # Filtering settings: filter_
         filter_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Filtering strategy. Space-separated list of: "
                 "n_obs, resolution, unit_cell, energy. Omitted from the "
@@ -810,7 +812,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Unit cell filtering method: 'range', 'value', or 'cluster'. "
                 "'value' uses explicit tolerances around a target cell. "
@@ -820,7 +822,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_value_target_unit_cell: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Target unit cell for value-based filtering. E.g. "
                 "'78 78 39 90 90 90'. Omitted from the rendered phil "
@@ -830,7 +832,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_value_relative_length_tolerance: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Fractional tolerance on unit cell lengths (e.g. 0.03 = "
                 "3%). Omitted from the rendered phil (falling back to "
@@ -839,7 +841,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_value_absolute_angle_tolerance: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Absolute tolerance on cell angles in degrees. Omitted "
                 "from the rendered phil (falling back to cctbx.xfel.merge's "
@@ -847,7 +849,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_value_target_space_group: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Target space group for value-based unit cell filtering. "
                 "Omitted from the rendered phil (falling back to "
@@ -856,14 +858,14 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_cluster_covariance_file: str = Field(
-            "",
+            default="",
             description=(
                 "Path to unit cell covariance file for cluster filtering. "
                 "Leave empty to skip cluster filtering."
             ),
         )
         filter_unit_cell_cluster_covariance_component: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Which covariance component to use. Omitted from the "
                 "rendered phil (falling back to cctbx.xfel.merge's own "
@@ -871,7 +873,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_unit_cell_cluster_covariance_mahalanobis: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Mahalanobis distance cutoff for unit cell outlier "
                 "rejection. Omitted from the rendered phil (falling back "
@@ -880,7 +882,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         filter_outlier_min_corr: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Minimum per-image correlation with merged data. Omitted "
                 "from the rendered phil (falling back to cctbx.xfel.merge's "
@@ -890,7 +892,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # Selection settings: select_
         select_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Per-reflection selection. Space-separated list of: "
                 "panel, cspad_sensor, significance_filter, isolation_forest. "
@@ -900,7 +902,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         select_significance_filter_sigma: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Minimum <I/sigma> for a reflection to be included. "
                 "Omitted from the rendered phil (falling back to "
@@ -911,14 +913,14 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # Scaling settings: scaling_
         scaling_model: str = Field(
-            "",
+            default="",
             description=(
                 "Path to a reference PDB or MTZ file for mark0 scaling. "
                 "Leave empty for internal KB/Wilson scaling."
             ),
         )
         scaling_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "'mark0' = per-image scaling against reference. "
                 "'mark1' = no scaling / Monte Carlo averaging "
@@ -929,21 +931,21 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         scaling_unit_cell: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Unit cell for mark1 scaling. "
                 "E.g. '78 78 39 90 90 90'. Required when algorithm=mark1."
             ),
         )
         scaling_space_group: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Space group for mark1 scaling. "
                 "E.g. 'P43212'. Required when algorithm=mark1."
             ),
         )
         scaling_resolution_scalar: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Scale merging.d_min by this factor to extend resolution "
                 "reach. Omitted from the rendered phil (falling back to "
@@ -954,7 +956,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # Merging resolution: required by xfel.merge even in scaling-only mode
         merging_d_min: float = Field(
-            3.0,
+            default=3.0,
             description=(
                 "High-resolution cutoff in Angstroms. Required even in "
                 "scaling-only mode — cctbx.xfel.merge's own default is "
@@ -964,7 +966,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         merging_merge_anomalous: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "If True, merge Bijvoet pairs. Omitted from the rendered "
                 "phil (falling back to cctbx.xfel.merge's own default of "
@@ -974,11 +976,11 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # Output settings: output_
         output_prefix: str = Field(
-            "",
+            default="",
             description="Prefix for output file names (e.g. 'scaling_r0036').",
         )
         output_output_dir: str = Field(
-            "",
+            default="",
             description=(
                 "Directory for scaled output files. "
                 "This path is stored in the LUTE DB so CCTBXMerger can "
@@ -986,7 +988,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         output_save_experiments_and_reflections: bool = Field(
-            True,
+            default=True,
             description=(
                 "Save scaled experiment and reflection files. Must stay "
                 "True — cctbx.xfel.merge's own default is False, which "
@@ -996,7 +998,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         output_do_timing: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Log elapsed time per step. Omitted from the rendered "
                 "phil (falling back to cctbx.xfel.merge's own default of "
@@ -1004,7 +1006,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         output_log_level: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Log verbosity (0=verbose). Omitted from the rendered "
                 "phil (falling back to cctbx.xfel.merge's own default of "
@@ -1014,7 +1016,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # Statistics
         statistics_n_bins: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Number of resolution shells for statistics. Omitted from "
                 "the rendered phil (falling back to cctbx.xfel.merge's own "
@@ -1024,7 +1026,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
         # Multiprocessing
         mp_method: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Multiprocessing method. Omitted from the rendered phil "
                 "(falling back to cctbx.xfel.merge's own default of "
@@ -1032,7 +1034,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         mp_psana2_mode: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Set True when using the integrate worker with psana2/XTC2 "
                 "data. Omitted from the rendered phil (falling back to "
@@ -1059,34 +1061,34 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
     )
 
     executable: str = Field(
-        "/sdf/group/lcls/ds/tools/cctbx/psana2/conda_base_psana2/bin/mpirun",
+        default="/sdf/group/lcls/ds/tools/cctbx/psana2/conda_base_psana2/bin/mpirun",
         description="MPI executable.",
         flag_type="",
     )
     cctbx_executable: str = Field(
-        "/sdf/group/lcls/ds/tools/cctbx/psana2/build/bin/cctbx.xfel.merge",
+        default="/sdf/group/lcls/ds/tools/cctbx/psana2/build/bin/cctbx.xfel.merge",
         description="CCTBX merge/scale program.",
         flag_type="",
     )
     phil_file: str = Field(
-        "",
+        default="",
         description="Location of the input settings ('phil') file.",
         flag_type="",
     )
     phil_parameters: Optional[ScalePhilParameters] = Field(
-        None,
+        default=None,
         description="Optional template parameters to fill in a CCTBX scale phil file.",
         flag_type="",
     )
     lute_template_cfg: TemplateConfig = Field(
-        TemplateConfig(
+        default=TemplateConfig(
             template_name="cctbx_scale.phil",
             output_path="",
         ),
         description="Template information for the cctbx_scale file.",
     )
     result_output_dir: str = Field(
-        "",
+        default="",
         description=(
             "Output directory for scaled files. Populated automatically from "
             "phil_parameters.output_output_dir and stored in the LUTE database "
@@ -1140,27 +1142,33 @@ class CompareHKLParameters(ThirdPartyParameters):
         """Whether the Executor should mark a specified parameter as a result."""
 
     executable: str = Field(
-        "/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/compare_hkl",
+        default="/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/compare_hkl",
         description="CrystFEL's reflection comparison binary.",
         flag_type="",
     )
     in_files: Optional[str] = Field(
-        "",
+        default="",
         description="Path to input HKLs. Space-separated list of 2. Use output of partialator e.g.",
         flag_type="",
     )
     ## Need mechanism to set is_result=True ...
-    symmetry: str = Field("", description="Point group symmetry.", flag_type="--")
+    symmetry: str = Field(
+        default="", description="Point group symmetry.", flag_type="--"
+    )
     cell_file: str = Field(
-        "",
+        default="",
         description="Path to a file containing unit cell information (PDB or CrystFEL format).",
         flag_type="-",
         rename_param="p",
     )
     fom: str = Field(
-        "Rsplit", description="Specify figure of merit to calculate.", flag_type="--"
+        default="Rsplit",
+        description="Specify figure of merit to calculate.",
+        flag_type="--",
     )
-    nshells: int = Field(10, description="Use n resolution shells.", flag_type="--")
+    nshells: int = Field(
+        default=10, description="Use n resolution shells.", flag_type="--"
+    )
     # NEED A NEW CASE FOR THIS -> Boolean flag, no arg, one hyphen...
     # fix_unity: bool = Field(
     #    False,
@@ -1169,20 +1177,20 @@ class CompareHKLParameters(ThirdPartyParameters):
     #    rename_param="u",
     # )
     shell_file: str = Field(
-        "",
+        default="",
         description="Write the statistics in resolution shells to a file.",
         flag_type="--",
         rename_param="shell-file",
         is_result=True,
     )
     ignore_negs: bool = Field(
-        False,
+        default=False,
         description="Ignore reflections with negative reflections.",
         flag_type="--",
         rename_param="ignore-negs",
     )
     zero_negs: bool = Field(
-        False,
+        default=False,
         description="Set negative intensities to 0.",
         flag_type="--",
         rename_param="zero-negs",
@@ -1275,31 +1283,31 @@ class ManipulateHKLParameters(ThirdPartyParameters):
         """Whether the Executor should mark a specified parameter as a result."""
 
     executable: str = Field(
-        "/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/get_hkl",
+        default="/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/get_hkl",
         description="CrystFEL's reflection manipulation binary.",
         flag_type="",
     )
     in_file: str = Field(
-        "",
+        default="",
         description="Path to input HKL file.",
         flag_type="-",
         rename_param="i",
     )
     out_file: str = Field(
-        "",
+        default="",
         description="Path to output file.",
         flag_type="-",
         rename_param="o",
         is_result=True,
     )
     cell_file: str = Field(
-        "",
+        default="",
         description="Path to a file containing unit cell information (PDB or CrystFEL format).",
         flag_type="-",
         rename_param="p",
     )
     output_format: str = Field(
-        "mtz",
+        default="mtz",
         description="Output format. One of mtz, mtz-bij, or xds. Otherwise CrystFEL format.",
         flag_type="--",
         rename_param="output-format",

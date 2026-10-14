@@ -48,23 +48,23 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         """Whether long command-line arguments are passed like `--long=arg`."""
 
     executable: str = Field(
-        "/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/indexamajig",
+        default="/sdf/group/lcls/ds/tools/crystfel/0.10.2/bin/indexamajig",
         description="CrystFEL's indexing binary.",
         flag_type="",
     )
     # Basic options
     in_file: Optional[str] = Field(
-        "", description="Path to input file.", flag_type="-", rename_param="i"
+        default="", description="Path to input file.", flag_type="-", rename_param="i"
     )
     out_file: str = Field(
-        "",
+        default="",
         description="Path to output file.",
         flag_type="-",
         rename_param="o",
         is_result=True,
     )
     peaks: Optional[str] = Field(
-        None,
+        default=None,
         description=(
             "Peak finding algorithm, or file type. E.g. peakfinder8 to peak find, "
             "or use cxi for CXI files."
@@ -72,7 +72,10 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         flag_type="--",
     )
     geometry: str = Field(
-        "", description="Path to geometry file.", flag_type="-", rename_param="g"
+        default="",
+        description="Path to geometry file.",
+        flag_type="-",
+        rename_param="g",
     )
     zmq_input: Optional[str] = Field(
         description="ZMQ address to receive data over. `input` and `zmq-input` are mutually exclusive",
@@ -130,7 +133,7 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         rename_param="data-format",
     )
     basename: bool = Field(
-        False,
+        default=False,
         description="Remove directory parts of filenames. Acts before prefix if prefix also given.",
         flag_type="--",
     )
@@ -140,13 +143,15 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         # rename_param="asapo-stream",
     )
     nthreads: PositiveInt = Field(
-        max(int(os.environ.get("SLURM_NPROCS", len(os.sched_getaffinity(0)))) - 1, 1),
+        default=max(
+            int(os.environ.get("SLURM_NPROCS", len(os.sched_getaffinity(0)))) - 1, 1
+        ),
         description="Number of threads to use. See also `max_indexer_threads`.",
         flag_type="-",
         rename_param="j",
     )
     no_check_prefix: bool = Field(
-        False,
+        default=False,
         description="Don't attempt to correct the prefix if it seems incorrect.",
         flag_type="--",
         rename_param="no-check-prefix",
@@ -155,7 +160,9 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         description="Mark all pixels greater than `x` has bad.", flag_type="--"
     )
     profile: bool = Field(
-        False, description="Display timing data to monitor performance.", flag_type="--"
+        default=False,
+        description="Display timing data to monitor performance.",
+        flag_type="--",
     )
     temp_dir: Optional[str] = Field(
         description="Specify a path for the temp files folder.",
@@ -163,13 +170,13 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         rename_param="temp-dir",
     )
     wait_for_file: conint(gt=-2) = Field(  # type: ignore
-        0,
+        default=0,
         description="Wait at most `x` seconds for a file to be created. A value of -1 means wait forever.",
         flag_type="--",
         rename_param="wait-for-file",
     )
     no_image_data: bool = Field(
-        False,
+        default=False,
         description="Load only the metadata, no iamges. Can check indexability without high data requirements.",
         flag_type="--",
         rename_param="no-image-data",
@@ -182,7 +189,7 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         flag_type="--",
     )
     fromfile_input_file: Optional[str] = Field(
-        None,
+        default=None,
         description="If replaying, the filename to use for indexing results.",
         flag_type="--",
         rename_param="fromfile-input-file",
@@ -194,7 +201,7 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         rename_param="p",
     )
     tolerance: str = Field(
-        "5,5,5,1.5",
+        default="5,5,5,1.5",
         description=(
             "Tolerances (in percent) for unit cell comparison. "
             "Comma-separated list a,b,c,angle. Default=5,5,5,1.5"
@@ -202,19 +209,19 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         flag_type="--",
     )
     no_check_cell: bool = Field(
-        False,
+        default=False,
         description="Do not check cell parameters against unit cell. Replaces '-raw' method.",
         flag_type="--",
         rename_param="no-check-cell",
     )
     no_check_peaks: bool = Field(
-        False,
+        default=False,
         description="Do not verify peaks are accounted for by solution.",
         flag_type="--",
         rename_param="no-check-peaks",
     )
     multi: bool = Field(
-        False, description="Enable multi-lattice indexing.", flag_type="--"
+        default=False, description="Enable multi-lattice indexing.", flag_type="--"
     )
     wavelength_estimate: Optional[float] = Field(
         description="Estimate for X-ray wavelength. Required for some methods.",
@@ -233,19 +240,19 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         rename_param="max-indexer-threads",
     )
     no_retry: bool = Field(
-        False,
+        default=False,
         description="Do not remove weak peaks and try again.",
         flag_type="--",
         rename_param="no-retry",
     )
     no_refine: bool = Field(
-        False,
+        default=False,
         description="Skip refinement step.",
         flag_type="--",
         rename_param="no-refine",
     )
     no_revalidate: bool = Field(
-        False,
+        default=False,
         description="Skip revalidation step.",
         flag_type="--",
         rename_param="no-revalidate",
@@ -329,7 +336,7 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         rename_param="xgandalf-max-peaks",
     )
     xgandalf_fast_execution: bool = Field(
-        False,
+        default=False,
         description="Shortcut to set sampling-pitch=2, and grad-desc-iterations=3.",
         flag_type="--",
         rename_param="xgandalf-fast-execution",
@@ -339,7 +346,9 @@ class IndexCrystFELParameters(ThirdPartyParameters):
     # asdf_fast: bool = Field(False, description="Enable fast mode for asdf. 3x faster for 7% loss in accuracy.", flag_type="--", rename_param="asdf-fast")
     # Integration parameters
     integration: str = Field(
-        "rings-nocen", description="Method for integrating reflections.", flag_type="--"
+        default="rings-nocen",
+        description="Method for integrating reflections.",
+        flag_type="--",
     )
     fix_profile_radius: Optional[float] = Field(
         description="Fix the profile radius (m^{-1})",
@@ -347,40 +356,40 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         rename_param="fix-profile-radius",
     )
     fix_divergence: Optional[float] = Field(
-        0,
+        default=0,
         description="Fix the divergence (rad, full angle).",
         flag_type="--",
         rename_param="fix-divergence",
     )
     int_radius: str = Field(
-        "4,5,7",
+        default="4,5,7",
         description="Inner, middle, and outer radii for 3-ring integration.",
         flag_type="--",
         rename_param="int-radius",
     )
     int_diag: str = Field(
-        "none",
+        default="none",
         description="Show detailed information on integration when condition is met.",
         flag_type="--",
         rename_param="int-diag",
     )
     push_res: str = Field(
-        "infinity",
+        default="infinity",
         description="Integrate `x` higher than apparent resolution limit (nm-1).",
         flag_type="--",
         rename_param="push-res",
     )
     overpredict: bool = Field(
-        False,
+        default=False,
         description="Over-predict reflections. Maybe useful with post-refinement.",
         flag_type="--",
     )
     cell_parameters_only: bool = Field(
-        False, description="Do not predict refletions at all", flag_type="--"
+        default=False, description="Do not predict refletions at all", flag_type="--"
     )
     # Output parameters
     no_non_hits_in_stream: bool = Field(
-        False,
+        default=False,
         description="Exclude non-hits from the stream file.",
         flag_type="--",
         rename_param="no-non-hits-in-stream",
@@ -391,13 +400,13 @@ class IndexCrystFELParameters(ThirdPartyParameters):
         rename_param="copy-hheader",
     )
     no_peaks_in_stream: bool = Field(
-        False,
+        default=False,
         description="Do not record peaks in stream file.",
         flag_type="--",
         rename_param="no-peaks-in-stream",
     )
     no_refls_in_stream: bool = Field(
-        False,
+        default=False,
         description="Do not record reflections in stream.",
         flag_type="--",
         rename_param="no-refls-in-stream",
@@ -498,17 +507,17 @@ class ConcatenateStreamFilesParameters(TaskParameters):
         """Whether the Executor should mark a specified parameter as a result."""
 
     in_file: str = Field(
-        "",
+        default="",
         description="Root of directory tree storing stream files to merge.",
     )
 
     tag: Optional[str] = Field(
-        "",
+        default="",
         description="Tag identifying the stream files to merge.",
     )
 
     out_file: str = Field(
-        "", description="Path to merged output stream file.", is_result=True
+        default="", description="Path to merged output stream file.", is_result=True
     )
 
     @validator("in_file", always=True)
@@ -558,7 +567,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Generic input settings: input_
         input_reference_geometry: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Provide an models.expt file with exactly one detector model. Data "
                 "processing will use that geometry instead of the geometry found "
@@ -568,17 +577,17 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Generic geometry: geometry_
         geometry_detector_panel_origin: Optional[Tuple[float, float, float]] = Field(
-            None,
+            default=None,
             description="Override the panel origin. Requires fast_axis and slow_axis.",
         )
 
         # Generic output settings: output_
         output_output_dir: str = Field(
-            "",
+            default="",
             description="Directory output files will be placed",
         )
         output_composite_output: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "If True, save one set of experiment/reflection files per process, "
                 "where each is a concatenated list of all the successful events "
@@ -590,10 +599,10 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         output_logging_dir: str = Field(
-            "", description="Directory output log files will be placed"
+            default="", description="Directory output log files will be placed"
         )
         output_logging_option: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Logging verbosity option. One of: normal, suppressed, disabled. "
                 "'suppressed' silences per-image log output (recommended for MPI jobs). "
@@ -606,7 +615,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Dispatch settings: dispatch_
         dispatch_index: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Attempt to index images. find_spots also needs to be True for "
                 "this to work. Omitted from the rendered phil (falling back to "
@@ -615,7 +624,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         dispatch_refine: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "If True, after indexing, refine the experimental models. "
                 "Omitted from the rendered phil (falling back to "
@@ -624,7 +633,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         dispatch_integrate: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Integrate indexed images. Ignored if index=False or "
                 "find_spots=False. Omitted from the rendered phil (falling "
@@ -633,7 +642,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         dispatch_hit_finder_enable: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Whether to filter out images that do not have at least "
                 "minimum_number_of_reflections strong spots. Omitted from the "
@@ -642,7 +651,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         dispatch_hit_finder_minimum_number_of_reflections: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Minimum number of strong spots for an image to be considered "
                 "a hit and processed further. Omitted from the rendered phil "
@@ -650,7 +659,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         dispatch_hit_finder_maximum_number_of_reflections: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Maximum number of strong spots for an image to still be "
                 "considered for processing. Omitted from the rendered phil "
@@ -660,13 +669,13 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Parallel processing parameters: mp_
         mp_method: str = Field(
-            "mpi",  # *multiprocessing sge lsf pbs mpi
+            default="mpi",  # *multiprocessing sge lsf pbs mpi
             description="The multiprocessing method to use",
         )
 
         # Radial average parameters: radial_average_
         radial_average_enable: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Calculate a radial average of each image, used e.g. to check "
                 "detector distance calibration against known powder ring "
@@ -675,42 +684,42 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         radial_average_two_theta_low: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Low two-theta (degrees) bound for the radial average range. "
                 "Omitted from the rendered phil unless explicitly set."
             ),
         )
         radial_average_two_theta_high: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "High two-theta (degrees) bound for the radial average range. "
                 "Omitted from the rendered phil unless explicitly set."
             ),
         )
         radial_average_verbose: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Verbose output for the radial average calculation. Omitted "
                 "from the rendered phil unless explicitly set."
             ),
         )
         radial_average_output_bins: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Output the radial average bins. Omitted from the rendered "
                 "phil unless explicitly set."
             ),
         )
         radial_average_show_plots: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "Show plots of the radial average. Omitted from the rendered "
                 "phil unless explicitly set."
             ),
         )
         radial_average_mask: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Path to a mask file used when calculating the radial "
                 "average. Omitted from the rendered phil unless explicitly "
@@ -720,10 +729,10 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Spotfinding parameters: spotfinder_
         spotfinder_lookup_mask: Optional[str] = Field(
-            None, description="The path to the mask file."
+            default=None, description="The path to the mask file."
         )
         spotfinder_threshold_dispersion_gain: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Use a flat gain map for the entire detector to act as a "
                 "multiplier for the gain set by the format. Cannot be used in "
@@ -731,7 +740,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         spotfinder_threshold_dispersion_sigma_bkgnd: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "The number of standard deviations of the index of dispersion "
                 "(variance / mean) in the local area below which the pixel "
@@ -741,7 +750,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         spotfinder_threshold_dispersion_sigma_strong: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "The number of standard deviations above the mean in the local "
                 "area above which the pixel will be classified as strong. "
@@ -751,7 +760,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         spotfinder_threshold_dispersion_global_threshold: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "The global threshold value. Consider all pixels less than "
                 "this value to be part of the background. Omitted from the "
@@ -760,7 +769,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         spotfinder_threshold_dispersion_kernel_size: Optional[Tuple[int, int]] = Field(
-            None,
+            default=None,
             description=(
                 "The size of the local area around the spot in which to "
                 "calculate the mean and variance. The kernel is given as a box "
@@ -772,7 +781,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         spotfinder_filter_min_spot_size: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "The minimum number of contiguous pixels for a spot to be "
                 "accepted by the filtering algorithm. Omitted from the "
@@ -782,14 +791,14 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         spotfinder_filter_d_min: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "The high resolution limit in Angstrom for a pixel to be "
                 "accepted by the filtering algorithm."
             ),
         )
         spotfinder_filter_max_spot_size: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "The maximum number of contiguous pixels for a spot to be "
                 "accepted by the filtering algorithm. Omitted from the "
@@ -797,7 +806,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         spotfinder_threshold_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Spotfinding threshold algorithm: one of 'dispersion', "
                 "'dispersion_extended', or 'radial_profile'. Omitted from the "
@@ -808,7 +817,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Indexing parameters: indexing_
         indexing_stills_refine_candidates_with_known_symmetry: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "If False, when choosing the best set of candidate basis "
                 "solutions, refine the candidates in the P1 setting. If True, "
@@ -820,7 +829,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         indexing_stills_refine_all_candidates: Optional[bool] = Field(
-            None,
+            default=None,
             description=(
                 "If False, no attempt is made to refine the model from initial "
                 "basis vector selection. The indexing solution with the best "
@@ -830,13 +839,13 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         indexing_known_symmetry_space_group: Optional[str] = Field(
-            None, description="Target space group for indexing."
+            default=None, description="Target space group for indexing."
         )
         indexing_known_symmetry_unit_cell: Optional[str] = Field(
-            None, description="Target unit cell for indexing."
+            default=None, description="Target unit cell for indexing."
         )
         indexing_refinement_protocol_d_min_start: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Resolution (d_min) used for the initial, low-resolution "
                 "indexing refinement macrocycle, before subsequent cycles "
@@ -845,7 +854,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         indexing_multiple_lattice_search_max_lattices: Optional[int] = Field(
-            None,
+            default=None,
             description=(
                 "Maximum number of candidate lattices to search for per "
                 "still image, enabling multi-lattice indexing. Omitted from "
@@ -855,10 +864,11 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Integration parameters: integration_
         integration_lookup_mask: Optional[str] = Field(
-            None, description="The path to the mask file used during integration."
+            default=None,
+            description="The path to the mask file used during integration.",
         )
         integration_background_simple_outlier_plane_n_sigma: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "The number of standard deviations above the threshold "
                 "plane to use in rejecting outliers from background "
@@ -868,7 +878,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
             ),
         )
         integration_summation_detector_gain: Optional[float] = Field(
-            None,
+            default=None,
             description=(
                 "Multiplier for variances after integration of still images. See "
                 "Leslie 1999. Omitted from the rendered phil (falling back to "
@@ -879,7 +889,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Profiling parameters: profile_
         profile_gaussian_rs_centroid_definition: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "The centroid to use as beam divergence (centre of mass or "
                 "s1). Omitted from the rendered phil (falling back to "
@@ -890,7 +900,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
 
         # Refinement options: refinement_
         refinement_reflections_outlier_algorithm: Optional[str] = Field(
-            None,
+            default=None,
             description=(
                 "Outlier rejection algorithm: one of 'null', 'auto', 'mcd', "
                 "'tukey', 'sauter_poon'. If auto is selected, the algorithm "
@@ -915,12 +925,12 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
     _set_phil_template_parameters = template_parameter_validator("phil_parameters")
 
     executable: str = Field(
-        "/sdf/group/lcls/ds/tools/cctbx/psana2/conda_base_psana2/bin/mpirun",
+        default="/sdf/group/lcls/ds/tools/cctbx/psana2/conda_base_psana2/bin/mpirun",
         description="MPI executable.",
         flag_type="",
     )
     cctbx_executable: str = Field(
-        "/sdf/group/lcls/ds/tools/cctbx/psana2/build/bin/cctbx.xfel.process",
+        default="/sdf/group/lcls/ds/tools/cctbx/psana2/build/bin/cctbx.xfel.process",
         description=(
             "CCTBX indexing program. cctbx.xfel.process wraps dials.stills_process "
             "unchanged (identical phil scope for dispatch/spotfinder/indexing/"
@@ -935,7 +945,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
         flag_type="",
     )
     in_file: str = Field(
-        "",
+        default="",
         description=(
             "The location of a data specification for LCLS. "
             "This file will be written for you based on the data_spec parameter. "
@@ -944,7 +954,7 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
         flag_type="",
     )
     data_spec: Optional[Dict[str, Union[str, float, int]]] = Field(
-        None,
+        default=None,
         description=(
             "Provide a CCTBX specification for data access. Keys become "
             "'key=value' lines in the generated psana locator (.loc) file, "
@@ -970,17 +980,17 @@ class IndexCCTBXXFELParameters(ThirdPartyParameters):
         flag_type="",
     )
     phil_file: str = Field(
-        "",
+        default="",
         description="Location of the input settings ('phil') file.",
         flag_type="",
     )
     phil_parameters: Optional[PhilParameters] = Field(
-        None,
+        default=None,
         description="Optional template parameters to fill in a CCTBX phil file.",
         flag_type="",  # Does nothing since always None by time it's seen by Task
     )
     lute_template_cfg: TemplateConfig = Field(
-        TemplateConfig(
+        default=TemplateConfig(
             template_name="cctbx_index.phil",
             output_path="",
         ),
