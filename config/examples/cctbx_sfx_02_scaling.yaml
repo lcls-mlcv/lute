@@ -5,7 +5,7 @@
 # Binary:  cctbx.xfel.merge  (via mpirun, scaling-only step list)
 #
 # Reads *_integrated.expt/.refl from the indexing output directory.
-# Produces scaled .expt/.refl in output_output_dir.
+# Produces scaled .expt/.refl in output.output_dir.
 # The output path is stored in the LUTE DB so the downstream
 # CCTBXMerger step can auto-resolve input_path.
 ##############################################################################
@@ -19,41 +19,57 @@ work_dir: /sdf/data/lcls/ds/mfx/mfx101624926/scratch
 ---
 ScaleCCTBXXFEL:
   phil_parameters:
+    # Nested exactly like the cctbx.xfel.merge phil file. Any cctbx.xfel.merge
+    # parameter can be added at its place in the tree, even if LUTE does not
+    # model it (e.g. filter.outlier.mad_thresh): it is passed through as-is.
+
     # Dispatch: scaling-only pipeline (this is the default; shown for clarity)
-    dispatch_step_list: >-
-      input balance model_scaling modify filter scale postrefine
-      statistics_unitcell statistics_beam model_statistics statistics_resolution
+    dispatch:
+      step_list: >-
+        input balance model_scaling modify filter scale postrefine
+        statistics_unitcell statistics_beam model_statistics statistics_resolution
 
     # Input: indexed data from CCTBXIndexer
-    input_path: /sdf/data/lcls/ds/mfx/mfx101624926/results/pam/r0036/cctbx_indexed
+    input:
+      path: /sdf/data/lcls/ds/mfx/mfx101624926/results/pam/r0036/cctbx_indexed
 
     # Filtering: value-based unit cell filter
-    filter_algorithm: "n_obs resolution unit_cell"
-    filter_unit_cell_algorithm: value
-    filter_unit_cell_value_target_unit_cell: "78 78 39 90 90 90"
-    filter_unit_cell_value_relative_length_tolerance: 0.03
-    filter_unit_cell_value_absolute_angle_tolerance: 2.0
-    filter_unit_cell_value_target_space_group: "P 43 21 2"
-    filter_outlier_min_corr: -1.0   # no correlation filter on first pass
+    filter:
+      algorithm: "n_obs resolution unit_cell"
+      unit_cell:
+        algorithm: value
+        value:
+          target_unit_cell: "78 78 39 90 90 90"
+          relative_length_tolerance: 0.03
+          absolute_angle_tolerance: 2.0
+          target_space_group: "P 43 21 2"
+      outlier:
+        min_corr: -1.0   # no correlation filter on first pass
 
     # Reflection selection
-    select_algorithm: significance_filter
-    select_significance_filter_sigma: 0.1
+    select:
+      algorithm: significance_filter
+      significance_filter:
+        sigma: 0.1
 
     # Scaling: mark0 with PDB reference
-    scaling_model: /sdf/data/lcls/ds/mfx/mfx101624926/scratch/tutorial/pdb/8P1C.pdb
-    scaling_algorithm: mark0      # mark0 = per-image scaling; mark1 = no scaling
-    scaling_resolution_scalar: 0.993420862158964
+    scaling:
+      model: /sdf/data/lcls/ds/mfx/mfx101624926/scratch/tutorial/pdb/8P1C.pdb
+      algorithm: mark0      # mark0 = per-image scaling; mark1 = no scaling
+      resolution_scalar: 0.993420862158964
 
     # Resolution cutoff (required even in scaling-only mode)
-    merging_d_min: 1.8
-    merging_merge_anomalous: True
+    merging:
+      d_min: 1.8
+      merge_anomalous: True
 
     # Output
-    output_prefix: scaling_r0036
-    output_output_dir: /sdf/data/lcls/ds/mfx/mfx101624926/results/pam/r0036/000_rg009/task009/out
-    output_save_experiments_and_reflections: True   # REQUIRED for downstream merging
-    output_do_timing: True
+    output:
+      prefix: scaling_r0036
+      output_dir: /sdf/data/lcls/ds/mfx/mfx101624926/results/pam/r0036/000_rg009/task009/out
+      save_experiments_and_reflections: True   # REQUIRED for downstream merging
+      do_timing: True
 
     # Statistics
-    statistics_n_bins: 20
+    statistics:
+      n_bins: 20

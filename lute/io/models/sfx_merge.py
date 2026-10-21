@@ -27,6 +27,7 @@ from pydantic import Field, validator, BaseModel
 
 from lute.io.db import read_latest_db_entry
 from lute.io.models.base import ThirdPartyParameters, TemplateConfig
+from lute.io.models.cctbx_phil import PhilScope, phil_parameter_validator
 from lute.io.models.validators import template_parameter_validator
 
 
@@ -746,319 +747,312 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
         set_result: bool = True
         """Store the output directory in the LUTE DB for downstream auto-resolution."""
 
-    class ScalePhilParameters(BaseModel):
-        """Template parameters for the cctbx_scale.phil file."""
+    class ScalePhilParameters(PhilScope):
+        """Phil parameters for cctbx.xfel.merge (scaling-only).
 
-        class Config(BaseModel.Config):  # type: ignore
-            extra: str = "allow"
+        Nested exactly like the phil file. Only the commonly used parameters
+        are modelled; any other cctbx.xfel.merge parameter can be added at the
+        matching place in the tree and is passed through as-is.
+        """
 
-        # dispatch: controls which pipeline steps run
-        dispatch_step_list: str = Field(
-            default=(
-                "input balance model_scaling modify filter scale postrefine "
-                "statistics_unitcell statistics_beam model_statistics "
-                "statistics_resolution"
-            ),
-            description=(
-                "Pipeline steps for the scaling-only workflow. "
-                "Override to add or remove steps."
-            ),
-        )
+        class Dispatch(PhilScope):
+            step_list: Optional[str] = Field(
+                default=(
+                    "input balance model_scaling modify filter scale postrefine "
+                    "statistics_unitcell statistics_beam model_statistics "
+                    "statistics_resolution"
+                ),
+                description=(
+                    "Pipeline steps for the scaling-only workflow. "
+                    "Override to add or remove steps."
+                ),
+            )
 
-        # input settings: input_
-        input_path: Union[str, List[str]] = Field(
-            default="",
-            description=(
-                "Path(s) to directory containing integrated data "
-                "(*_integrated.expt / *_integrated.refl). "
-                "Accepts a single path string or a list for multi-run scaling."
-            ),
-        )
-        input_experiments_suffix: Optional[str] = Field(
-            default=None,
-            description=(
-                "Suffix used to find experiment files. Omitted from the "
-                "rendered phil (falling back to cctbx.xfel.merge's own "
-                "default of '_integrated.expt') unless explicitly set."
-            ),
-        )
-        input_reflections_suffix: Optional[str] = Field(
-            default=None,
-            description=(
-                "Suffix used to find reflection files. Omitted from the "
-                "rendered phil (falling back to cctbx.xfel.merge's own "
-                "default of '_integrated.refl') unless explicitly set."
-            ),
-        )
-        input_parallel_file_load_method: Optional[str] = Field(
-            default=None,
-            description=(
-                "How to distribute input files across MPI ranks: 'uniform' "
-                "(equal files per rank) or 'node_memory' (memory-aware). "
-                "Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of 'uniform') unless "
-                "explicitly set."
-            ),
-        )
+        class Input(PhilScope):
+            class ParallelFileLoad(PhilScope):
+                method: Optional[str] = Field(
+                    default=None,
+                    description=(
+                        "How to distribute input files across MPI ranks: "
+                        "'uniform' (equal files per rank) or 'node_memory' "
+                        "(memory-aware). cctbx.xfel.merge default: 'uniform'."
+                    ),
+                )
 
-        # Filtering settings: filter_
-        filter_algorithm: Optional[str] = Field(
-            default=None,
-            description=(
-                "Filtering strategy. Space-separated list of: "
-                "n_obs, resolution, unit_cell, energy. Omitted from the "
-                "rendered phil (falling back to cctbx.xfel.merge's own "
-                "default of no filtering at all) unless explicitly set."
-            ),
-        )
-        filter_unit_cell_algorithm: Optional[str] = Field(
-            default=None,
-            description=(
-                "Unit cell filtering method: 'range', 'value', or 'cluster'. "
-                "'value' uses explicit tolerances around a target cell. "
-                "Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of 'value') unless "
-                "explicitly set."
-            ),
-        )
-        filter_unit_cell_value_target_unit_cell: Optional[str] = Field(
-            default=None,
-            description=(
-                "Target unit cell for value-based filtering. E.g. "
-                "'78 78 39 90 90 90'. Omitted from the rendered phil "
-                "(falling back to cctbx.xfel.merge's own default of "
-                "'Auto', derived from the scaling model's PDB/MTZ header) "
-                "unless explicitly set."
-            ),
-        )
-        filter_unit_cell_value_relative_length_tolerance: Optional[float] = Field(
-            default=None,
-            description=(
-                "Fractional tolerance on unit cell lengths (e.g. 0.03 = "
-                "3%). Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of 0.1) unless explicitly "
-                "set."
-            ),
-        )
-        filter_unit_cell_value_absolute_angle_tolerance: Optional[float] = Field(
-            default=None,
-            description=(
-                "Absolute tolerance on cell angles in degrees. Omitted "
-                "from the rendered phil (falling back to cctbx.xfel.merge's "
-                "own default of 2.0) unless explicitly set."
-            ),
-        )
-        filter_unit_cell_value_target_space_group: Optional[str] = Field(
-            default=None,
-            description=(
-                "Target space group for value-based unit cell filtering. "
-                "Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of 'Auto', derived from "
-                "the scaling model's PDB/MTZ header) unless explicitly set."
-            ),
-        )
-        filter_unit_cell_cluster_covariance_file: str = Field(
-            default="",
-            description=(
-                "Path to unit cell covariance file for cluster filtering. "
-                "Leave empty to skip cluster filtering."
-            ),
-        )
-        filter_unit_cell_cluster_covariance_component: Optional[int] = Field(
-            default=None,
-            description=(
-                "Which covariance component to use. Omitted from the "
-                "rendered phil (falling back to cctbx.xfel.merge's own "
-                "default of 0) unless explicitly set."
-            ),
-        )
-        filter_unit_cell_cluster_covariance_mahalanobis: Optional[float] = Field(
-            default=None,
-            description=(
-                "Mahalanobis distance cutoff for unit cell outlier "
-                "rejection. Omitted from the rendered phil (falling back "
-                "to cctbx.xfel.merge's own default of 4.0) unless "
-                "explicitly set."
-            ),
-        )
-        filter_outlier_min_corr: Optional[float] = Field(
-            default=None,
-            description=(
-                "Minimum per-image correlation with merged data. Omitted "
-                "from the rendered phil (falling back to cctbx.xfel.merge's "
-                "own default of 0.1) unless explicitly set."
-            ),
-        )
+            path: Union[str, List[str]] = Field(
+                default=[],
+                description=(
+                    "Path(s) to directory containing integrated data "
+                    "(*_integrated.expt / *_integrated.refl). "
+                    "Accepts a single path string or a list for multi-run scaling."
+                ),
+            )
+            experiments_suffix: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Suffix used to find experiment files. "
+                    "cctbx.xfel.merge default: '_integrated.expt'."
+                ),
+            )
+            reflections_suffix: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Suffix used to find reflection files. "
+                    "cctbx.xfel.merge default: '_integrated.refl'."
+                ),
+            )
+            parallel_file_load: ParallelFileLoad = Field(
+                default_factory=ParallelFileLoad
+            )
 
-        # Selection settings: select_
-        select_algorithm: Optional[str] = Field(
-            default=None,
-            description=(
-                "Per-reflection selection. Space-separated list of: "
-                "panel, cspad_sensor, significance_filter, isolation_forest. "
-                "Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of no selection filtering "
-                "at all) unless explicitly set."
-            ),
-        )
-        select_significance_filter_sigma: Optional[float] = Field(
-            default=None,
-            description=(
-                "Minimum <I/sigma> for a reflection to be included. "
-                "Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of 0.5) unless explicitly "
-                "set."
-            ),
-        )
+            @validator("path", always=True, pre=True)
+            def normalize_path(cls, v: Union[str, List[str]]) -> List[str]:
+                """Normalize path to a list, filtering empty strings."""
+                if isinstance(v, str):
+                    return [v] if v else []
+                return [p for p in v if p]
 
-        # Scaling settings: scaling_
-        scaling_model: str = Field(
-            default="",
-            description=(
-                "Path to a reference PDB or MTZ file for mark0 scaling. "
-                "Leave empty for internal KB/Wilson scaling."
-            ),
-        )
-        scaling_algorithm: Optional[str] = Field(
-            default=None,
-            description=(
-                "'mark0' = per-image scaling against reference. "
-                "'mark1' = no scaling / Monte Carlo averaging "
-                "(requires scaling_unit_cell and scaling_space_group). "
-                "Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of 'mark0') unless "
-                "explicitly set."
-            ),
-        )
-        scaling_unit_cell: Optional[str] = Field(
-            default=None,
-            description=(
-                "Unit cell for mark1 scaling. "
-                "E.g. '78 78 39 90 90 90'. Required when algorithm=mark1."
-            ),
-        )
-        scaling_space_group: Optional[str] = Field(
-            default=None,
-            description=(
-                "Space group for mark1 scaling. "
-                "E.g. 'P43212'. Required when algorithm=mark1."
-            ),
-        )
-        scaling_resolution_scalar: Optional[float] = Field(
-            default=None,
-            description=(
-                "Scale merging.d_min by this factor to extend resolution "
-                "reach. Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of 0.969) unless explicitly "
-                "set."
-            ),
-        )
+        class Mp(PhilScope):
+            method: Optional[str] = Field(
+                default=None,
+                description="Multiprocessing method. cctbx.xfel.merge default: 'mpi'.",
+            )
+            psana2_mode: Optional[bool] = Field(
+                default=None,
+                description=(
+                    "Set True when using the integrate worker with psana2/XTC2 "
+                    "data. cctbx.xfel.merge default: False."
+                ),
+            )
 
-        # Merging resolution: required by xfel.merge even in scaling-only mode
-        merging_d_min: float = Field(
-            default=3.0,
-            description=(
-                "High-resolution cutoff in Angstroms. Required even in "
-                "scaling-only mode — cctbx.xfel.merge's own default is "
-                "unset (None), which produces empty output. Unlike other "
-                "fields here, there is no safe value to fall back to, so "
-                "this one stays required."
-            ),
-        )
-        merging_merge_anomalous: Optional[bool] = Field(
-            default=None,
-            description=(
-                "If True, merge Bijvoet pairs. Omitted from the rendered "
-                "phil (falling back to cctbx.xfel.merge's own default of "
-                "False) unless explicitly set."
-            ),
-        )
+        class Filter(PhilScope):
+            class UnitCell(PhilScope):
+                class Value(PhilScope):
+                    target_unit_cell: Optional[str] = Field(
+                        default=None,
+                        description=(
+                            "Target unit cell for value-based filtering. E.g. "
+                            "'78 78 39 90 90 90'. cctbx.xfel.merge default: "
+                            "'Auto' (from the scaling model's PDB/MTZ header)."
+                        ),
+                    )
+                    relative_length_tolerance: Optional[float] = Field(
+                        default=None,
+                        description=(
+                            "Fractional tolerance on unit cell lengths (e.g. "
+                            "0.03 = 3%). cctbx.xfel.merge default: 0.1."
+                        ),
+                    )
+                    absolute_angle_tolerance: Optional[float] = Field(
+                        default=None,
+                        description=(
+                            "Absolute tolerance on cell angles in degrees. "
+                            "cctbx.xfel.merge default: 2.0."
+                        ),
+                    )
+                    target_space_group: Optional[str] = Field(
+                        default=None,
+                        description=(
+                            "Target space group for value-based unit cell "
+                            "filtering. cctbx.xfel.merge default: 'Auto' (from "
+                            "the scaling model's PDB/MTZ header)."
+                        ),
+                    )
 
-        # Output settings: output_
-        output_prefix: str = Field(
-            default="",
-            description="Prefix for output file names (e.g. 'scaling_r0036').",
-        )
-        output_output_dir: str = Field(
-            default="",
-            description=(
-                "Directory for scaled output files. "
-                "This path is stored in the LUTE DB so CCTBXMerger can "
-                "auto-resolve input_path from it."
-            ),
-        )
-        output_save_experiments_and_reflections: bool = Field(
-            default=True,
-            description=(
-                "Save scaled experiment and reflection files. Must stay "
-                "True — cctbx.xfel.merge's own default is False, which "
-                "would produce no output for CCTBXMerger to read. Unlike "
-                "other fields here, there is no safe value to fall back "
-                "to, so this one stays required."
-            ),
-        )
-        output_do_timing: Optional[bool] = Field(
-            default=None,
-            description=(
-                "Log elapsed time per step. Omitted from the rendered "
-                "phil (falling back to cctbx.xfel.merge's own default of "
-                "False) unless explicitly set."
-            ),
-        )
-        output_log_level: Optional[int] = Field(
-            default=None,
-            description=(
-                "Log verbosity (0=verbose). Omitted from the rendered "
-                "phil (falling back to cctbx.xfel.merge's own default of "
-                "1) unless explicitly set."
-            ),
-        )
+                class Cluster(PhilScope):
+                    class Covariance(PhilScope):
+                        file: Optional[str] = Field(
+                            default=None,
+                            description=(
+                                "Path to unit cell covariance file for cluster "
+                                "filtering (used when algorithm = cluster)."
+                            ),
+                        )
+                        component: Optional[int] = Field(
+                            default=None,
+                            description=(
+                                "Which covariance component to use. "
+                                "cctbx.xfel.merge default: 0."
+                            ),
+                        )
+                        mahalanobis: Optional[float] = Field(
+                            default=None,
+                            description=(
+                                "Mahalanobis distance cutoff for unit cell "
+                                "outlier rejection. cctbx.xfel.merge default: 4.0."
+                            ),
+                        )
 
-        # Statistics
-        statistics_n_bins: Optional[int] = Field(
-            default=None,
-            description=(
-                "Number of resolution shells for statistics. Omitted from "
-                "the rendered phil (falling back to cctbx.xfel.merge's own "
-                "default of 10) unless explicitly set."
-            ),
-        )
+                    covariance: Covariance = Field(default_factory=Covariance)
 
-        # Multiprocessing
-        mp_method: Optional[str] = Field(
-            default=None,
-            description=(
-                "Multiprocessing method. Omitted from the rendered phil "
-                "(falling back to cctbx.xfel.merge's own default of "
-                "'mpi') unless explicitly set."
-            ),
-        )
-        mp_psana2_mode: Optional[bool] = Field(
-            default=None,
-            description=(
-                "Set True when using the integrate worker with psana2/XTC2 "
-                "data. Omitted from the rendered phil (falling back to "
-                "cctbx.xfel.merge's own default of False) unless explicitly "
-                "set."
-            ),
-        )
+                algorithm: Optional[str] = Field(
+                    default=None,
+                    description=(
+                        "Unit cell filtering method: 'range', 'value', or "
+                        "'cluster'. cctbx.xfel.merge default: 'value'."
+                    ),
+                )
+                value: Value = Field(default_factory=Value)
+                cluster: Cluster = Field(default_factory=Cluster)
 
-        @validator("input_path", always=True, pre=True)
-        def normalize_input_path(cls, v: Union[str, List[str]]) -> List[str]:
-            """Normalize input_path to a list, filtering empty strings."""
-            if isinstance(v, str):
-                return [v] if v else []
-            return [p for p in v if p]
+            class Outlier(PhilScope):
+                min_corr: Optional[float] = Field(
+                    default=None,
+                    description=(
+                        "Minimum per-image correlation with merged data. "
+                        "cctbx.xfel.merge default: 0.1."
+                    ),
+                )
 
-        @validator("output_output_dir", always=True)
-        def set_output_dir(cls, output: str, values: Dict[str, Any]) -> str:
-            if output == "":
-                return os.getenv("LUTE_WORK_DIR", ".")
-            return output
+            algorithm: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Filtering strategy. Space-separated list of: n_obs, "
+                    "resolution, unit_cell, energy. cctbx.xfel.merge default: "
+                    "no filtering."
+                ),
+            )
+            unit_cell: UnitCell = Field(default_factory=UnitCell)
+            outlier: Outlier = Field(default_factory=Outlier)
 
-    _set_scale_phil_template_parameters = template_parameter_validator(
-        "phil_parameters"
-    )
+        class Select(PhilScope):
+            class SignificanceFilter(PhilScope):
+                sigma: Optional[float] = Field(
+                    default=None,
+                    description=(
+                        "Minimum <I/sigma> for a reflection to be included. "
+                        "cctbx.xfel.merge default: 0.5."
+                    ),
+                )
+
+            algorithm: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Per-reflection selection. Space-separated list of: panel, "
+                    "cspad_sensor, significance_filter, isolation_forest. "
+                    "cctbx.xfel.merge default: no selection."
+                ),
+            )
+            significance_filter: SignificanceFilter = Field(
+                default_factory=SignificanceFilter
+            )
+
+        class Scaling(PhilScope):
+            model: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Path to a reference PDB or MTZ file for mark0 scaling. "
+                    "Leave unset for internal KB/Wilson scaling."
+                ),
+            )
+            algorithm: Optional[str] = Field(
+                default=None,
+                description=(
+                    "'mark0' = per-image scaling against reference. "
+                    "'mark1' = no scaling / Monte Carlo averaging "
+                    "(requires unit_cell and space_group). "
+                    "cctbx.xfel.merge default: 'mark0'."
+                ),
+            )
+            unit_cell: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Unit cell for mark1 scaling. E.g. '78 78 39 90 90 90'. "
+                    "Required when algorithm=mark1."
+                ),
+            )
+            space_group: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Space group for mark1 scaling. E.g. 'P43212'. "
+                    "Required when algorithm=mark1."
+                ),
+            )
+            resolution_scalar: Optional[float] = Field(
+                default=None,
+                description=(
+                    "Scale merging.d_min by this factor to extend resolution "
+                    "reach. cctbx.xfel.merge default: 0.969."
+                ),
+            )
+
+        class Merging(PhilScope):
+            d_min: float = Field(
+                default=3.0,
+                description=(
+                    "High-resolution cutoff in Angstroms. Required even in "
+                    "scaling-only mode — cctbx.xfel.merge's own default is "
+                    "unset (None), which produces empty output."
+                ),
+            )
+            merge_anomalous: Optional[bool] = Field(
+                default=None,
+                description=(
+                    "If True, merge Bijvoet pairs. " "cctbx.xfel.merge default: False."
+                ),
+            )
+
+        class Statistics(PhilScope):
+            n_bins: Optional[int] = Field(
+                default=None,
+                description=(
+                    "Number of resolution shells for statistics. "
+                    "cctbx.xfel.merge default: 10."
+                ),
+            )
+
+        class Output(PhilScope):
+            prefix: Optional[str] = Field(
+                default=None,
+                description=(
+                    "Prefix for output file names (e.g. 'scaling_r0036'). "
+                    "cctbx.xfel.merge default: 'iobs'."
+                ),
+            )
+            output_dir: str = Field(
+                default="",
+                description=(
+                    "Directory for scaled output files. Defaults to "
+                    "$LUTE_WORK_DIR. This path is stored in the LUTE DB so "
+                    "CCTBXMerger can auto-resolve its input path from it."
+                ),
+            )
+            save_experiments_and_reflections: bool = Field(
+                default=True,
+                description=(
+                    "Save scaled experiment and reflection files. Must stay "
+                    "True — cctbx.xfel.merge's own default is False, which "
+                    "would produce no output for CCTBXMerger to read."
+                ),
+            )
+            do_timing: Optional[bool] = Field(
+                default=None,
+                description=(
+                    "Log elapsed time per step. cctbx.xfel.merge default: False."
+                ),
+            )
+            log_level: Optional[int] = Field(
+                default=None,
+                description=("Log verbosity (0=verbose). cctbx.xfel.merge default: 1."),
+            )
+
+            @validator("output_dir", always=True)
+            def set_output_dir(cls, output_dir: str) -> str:
+                if output_dir == "":
+                    return os.getenv("LUTE_WORK_DIR", ".")
+                return output_dir
+
+        dispatch: Dispatch = Field(default_factory=Dispatch)
+        input: Input = Field(default_factory=Input)
+        mp: Mp = Field(default_factory=Mp)
+        filter: Filter = Field(default_factory=Filter)
+        select: Select = Field(default_factory=Select)
+        scaling: Scaling = Field(default_factory=Scaling)
+        merging: Merging = Field(default_factory=Merging)
+        statistics: Statistics = Field(default_factory=Statistics)
+        output: Output = Field(default_factory=Output)
+
+    _set_scale_phil_template_parameters = phil_parameter_validator("phil_parameters")
 
     executable: str = Field(
         default="/sdf/group/lcls/ds/tools/cctbx/psana2/conda_base_psana2/bin/mpirun",
@@ -1091,7 +1085,7 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
         default="",
         description=(
             "Output directory for scaled files. Populated automatically from "
-            "phil_parameters.output_output_dir and stored in the LUTE database "
+            "phil_parameters.output.output_dir and stored in the LUTE database "
             "so that a downstream CCTBXMerger task can auto-resolve input_path."
         ),
         flag_type="",
@@ -1114,15 +1108,14 @@ class ScaleCCTBXXFELParameters(ThirdPartyParameters):
 
     @validator("result_output_dir", always=True)
     def sync_result_from_output_dir(cls, v: str, values: Dict[str, Any]) -> str:
-        """Copy output_output_dir (extracted from ScalePhilParameters) to result."""
-        if v == "" and "output_output_dir" in values:
-            raw = values["output_output_dir"]
-            # At this point it may be a raw str (before extra_fields_to_thirdparty)
-            # or a TemplateParameters (if ordering shifts) — handle both
-            if hasattr(raw, "params"):
-                return str(raw.params)
-            if isinstance(raw, str) and raw:
-                return raw
+        """Copy output.output_dir (from ScalePhilParameters) to the result."""
+        if v == "":
+            raw: Any = values.get("phil_tree", {})
+            # May already be wrapped as TemplateParameters depending on ordering
+            tree: Dict[str, Any] = raw.params if hasattr(raw, "params") else raw
+            output_dir: Optional[str] = tree.get("output", {}).get("output_dir")
+            if output_dir:
+                return output_dir
         return v
 
 
