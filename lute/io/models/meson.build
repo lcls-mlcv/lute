@@ -1,6 +1,7 @@
 py_sources = [
     'base.py',
     'bayfai.py',
+    'cctbx_phil.py',
     'cheetah.py',
     'geometry.py',
     '__init__.py',
