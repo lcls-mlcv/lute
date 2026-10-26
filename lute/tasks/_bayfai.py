@@ -913,7 +913,9 @@ class BayFAIOpt:
             t_fit = time.perf_counter()
             gp_model.fit(X_norm_samples, y_norm)
             # t_gp covers the UCB pick plus the refit, i.e. the optimizer's own overhead.
-            self.log_step("bo", i, next_sample, score, t_gp + time.perf_counter() - t_fit)
+            self.log_step(
+                "bo", i, next_sample, score, t_gp + time.perf_counter() - t_fit
+            )
 
         # 9. Gather results
         best_idx = np.argmax(y)
