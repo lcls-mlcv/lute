@@ -17,6 +17,7 @@ __author__ = "Louis Conreux"
 from lute.execution.logging import get_logger
 
 import os
+import time
 from typing import Optional
 import numpy as np
 import numpy.typing as npt
@@ -606,10 +607,13 @@ class BayFAIOpt:
             detector=self.detector,
             geometry=geom_sample,
         )
+        t0 = time.perf_counter()
         sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         data = sg.geometry_refinement.data
+        t1 = time.perf_counter()
 
         if data is None or len(data) == 0:
+            self.last_profile = (0, t1 - t0, 0.0)
             return 0.0
 
         ix = data[:, 0]
@@ -618,7 +622,17 @@ class BayFAIOpt:
         score = -np.log(
             sg.geometry_refinement.residu2(sample, ix, iy, ring) / len(data)
         )
+        self.last_profile = (len(data), t1 - t0, time.perf_counter() - t1)
         return score
+
+    def log_step(self, phase, step, sample, score, t_gp=0.0):
+        """Log one BO evaluation as a grep-able BOSTEP line, using the last score() timings."""
+        n_pts, t_extract, t_resid = self.last_profile
+        logger.info(
+            f"BOSTEP rank={self.rank} phase={phase} step={step} score={score:.4e} "
+            f"n_pts={n_pts} t_extract={t_extract:.3f} t_resid={t_resid:.4f} t_gp={t_gp:.3f} "
+            f"geom={','.join(f'{v:.6g}' for v in sample)}"
+        )
 
     def estimate_uncertainty(self, refinement, rel_eps=1e-3, abs_eps=1e-4):
         """
@@ -834,6 +848,7 @@ class BayFAIOpt:
         y = np.zeros((n_samples))
         for i in range(n_samples):
             y[i] = self.score(X_samples[i], Imin, max_rings, pts_per_deg)
+            self.log_step("init", i, X_samples[i], y[i])
             bo_history["params"].append(X_samples[i])
             bo_history["scores"].append(y[i])
 
@@ -876,7 +891,9 @@ class BayFAIOpt:
         # 5. Run the Bayesian Optimization loop
         for i in range(n_iterations):
             # 6. Select the next point to evaluate
+            t_gp = time.perf_counter()
             next = self.UCB(X_norm, gp_model, visited_idx, beta)
+            t_gp = time.perf_counter() - t_gp
             next_sample = X[next]
             visited_idx.append(next)
 
@@ -893,16 +910,23 @@ class BayFAIOpt:
                 y_norm = y - np.mean(y)
 
             # 8. Update the Gaussian Process model
+            t_fit = time.perf_counter()
             gp_model.fit(X_norm_samples, y_norm)
+            # t_gp covers the UCB pick plus the refit, i.e. the optimizer's own overhead.
+            self.log_step("bo", i, next_sample, score, t_gp + time.perf_counter() - t_fit)
 
         # 9. Gather results
         best_idx = np.argmax(y)
         best_param = X_samples[best_idx]
+        t_refine = time.perf_counter()
         data = self.extract_data(best_param, Imin, max_rings, pts_per_deg)
         score, sigma, penalty, params = self.gradient_descent(
             best_param, data, res, step
         )
-        logger.info(f"Rank {self.rank}: score={score:3e}, penalty={penalty:3e}")
+        logger.info(
+            f"Rank {self.rank}: score={score:3e}, penalty={penalty:3e}, "
+            f"t_refine={time.perf_counter() - t_refine:.3f}"
+        )
         result = {
             "bo_history": bo_history,
             "params": params,
