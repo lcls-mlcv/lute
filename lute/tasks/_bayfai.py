@@ -856,7 +856,10 @@ class BayFAIOpt:
             result = {
                 "bo_history": bo_history,
                 "params": np.array(
-                    [center[k] for k in ("dist", "poni1", "poni2", "rot1", "rot2", "rot3")]
+                    [
+                        center[k]
+                        for k in ("dist", "poni1", "poni2", "rot1", "rot2", "rot3")
+                    ]
                 ),
                 "score": 0.0,
                 "sigma": [np.inf] * 5,
