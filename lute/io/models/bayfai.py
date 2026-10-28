@@ -98,6 +98,11 @@ class BayFAIParameters(TaskParameters):
             description="Random seed for reproducibility.",
         )
 
+        n_cand: Optional[int] = Field(
+            default=8192,
+            description="Number of random grid points scored by UCB per BO step (0 or None = whole grid).",
+        )
+
     parallelized: Optional[str] = Field(
         None,
         description="Name of the geometry parameter to distribute across MPI ranks as a "
