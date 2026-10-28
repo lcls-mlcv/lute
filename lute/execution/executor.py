@@ -1788,7 +1788,8 @@ class MPIExecutor(Executor):
             )
         else:
             py_cmd = (
-                f"{self._py_executable} -OB -u -m mpi4py.run {executable_path} {params}"
+                # No -B: with PYTHONPYCACHEPREFIX set, ranks reuse -O bytecode instead of recompiling.
+                f"{self._py_executable} -O -u -m mpi4py.run {executable_path} {params}"
             )
 
         cmd: str = f"{mpi_cmd} {py_cmd}"

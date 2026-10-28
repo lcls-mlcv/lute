@@ -289,6 +289,9 @@ BayFAIOptimizer.update_environment(
         "NUMEXPR_NUM_THREADS": "16",
         # One rank per core: unset, each rank's pyFAI OpenMP pool spins on every core of the node.
         "OMP_NUM_THREADS": "1",
+        # The conda env ships no -O bytecode and is read-only; 63 ranks recompiling it took 100-230 s.
+        # Shared by every lute worktree next to this one.
+        "PYTHONPYCACHEPREFIX": os.path.join(os.path.dirname(__file__), "..", "..", ".pycache"),
         "PYTHONPATH": "/sdf/group/lcls/ds/tools/LCLSGeom/src",
     }
 )
