@@ -174,6 +174,15 @@ class BayFAIOpt:
             Minimum intensity value for identifying Bragg peaks
         """
         self.detector = self.build_detector(detname)
+        # twoThetaArray/chiArray recompute full-grid pixel positions (geometry-independent) on every
+        # BO evaluation via fromfunction index arrays; pyFAI callers copy (p1 - poni1), never mutate.
+        pos, calc = self.detector.calc_cartesian_positions(), self.detector.calc_cartesian_positions
+        for a in pos:
+            if a is not None:
+                a.flags.writeable = False
+        self.detector.calc_cartesian_positions = lambda d1=None, d2=None, center=True, use_cython=True: (
+            pos if center and all(d is None or np.shape(d) == self.detector.shape for d in (d1, d2))
+            else calc(d1, d2, center, use_cython))
         self.powder = self.generate_powder(h5, detname, Imin)
         self.calibrant = self.define_calibrant(calibrant, h5, wavelength)
         self.set_search_space(parallelized, fixed)
