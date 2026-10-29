@@ -18,7 +18,6 @@ from lute.execution.logging import get_logger
 
 import os
 import logging
-import panel as pn  # type: ignore
 import time  # type: ignore
 
 logger: logging.Logger = get_logger(__name__)
@@ -100,6 +99,8 @@ class BayFAI(Task):
             diagnostics_plot = optimizer.create_diagnostics_panel()
             _ = optimizer.create_summary_plot(plot=plot)
             _ph_add("post.plots", t_plots, time.time())
+            import panel as pn  # type: ignore
+
             pn.extension("matplotlib", "bokeh")
             plots = pn.Row(
                 pn.pane.Matplotlib(diagnostics_plot, sizing_mode="fixed"),
