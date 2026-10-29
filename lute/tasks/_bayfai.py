@@ -123,7 +123,7 @@ class _Massif(pyFAI.massif.Massif):
         seed=None,
         **kwarg,
     ):
-        """Verbatim pyFAI 2024.9 Massif.peaks_from_area except for the all_points line."""
+        """Verbatim pyFAI 2024.9 Massif.peaks_from_area except for the all_points and shuffle lines."""
         res = []
         cnt = 0
         dmin2 = dmin * dmin
@@ -135,13 +135,15 @@ class _Massif(pyFAI.massif.Massif):
             all_points = np.vstack((w[0] + rows[0], w[1])).T
         else:
             all_points = np.vstack(np.where(mask)).T
+        # ponytail: legacy RandomState.permutation(n) is arange(n) plus the same Fisher-Yates random_interval(i),
+        # i = n-1..1, as shuffle's multi-dim path: same draws, same rows, without the per-row bounce buffer.
         if len(all_points) > 0:
-            np.random.shuffle(all_points)
+            all_points = all_points[np.random.permutation(len(all_points))]
 
         if seed:
             seeds = np.array(list(seed))
             if len(seeds) > 0:
-                np.random.shuffle(seeds)
+                seeds = seeds[np.random.permutation(len(seeds))]
             all_points = np.concatenate((seeds, all_points))
 
         msg = "[ %3i, %3i ] -> [ %.1f, %.1f ]"
