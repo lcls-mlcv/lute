@@ -295,6 +295,7 @@ class _SingleGeometry(SingleGeometry):
         self.geometry_refinement.data = np.asarray(cp.getList(), dtype=np.float64)
         return cp
 
+
 # BAYPHASE timing: name -> [t0 of first occurrence, summed dt, n]. Timing only.
 _PH: dict = {}
 
