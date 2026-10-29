@@ -25,13 +25,6 @@ from unittest import mock
 import numpy as np
 import numpy.typing as npt
 import logging
-import matplotlib.pyplot as plt  # type: ignore
-import matplotlib.patches as patches  # type: ignore
-from matplotlib import lines  # type: ignore
-from bokeh.plotting import figure  # type: ignore
-from bokeh.models import LinearColorMapper, HoverTool  # type: ignore
-from bokeh.palettes import Viridis256, Category10  # type: ignore
-from bokeh.models.annotations import Label  # type: ignore
 import h5py  # type: ignore
 import pyFAI  # type: ignore
 import pyFAI.goniometer  # type: ignore
@@ -1357,6 +1350,9 @@ class BayFAIOpt:
         ax : plt.Axes
             Matplotlib axes
         """
+        import matplotlib.pyplot as plt  # type: ignore
+        from matplotlib import lines  # type: ignore
+
         if ax is None:
             fig, ax = plt.subplots()
 
@@ -1397,6 +1393,8 @@ class BayFAIOpt:
         ax : plt.Axes, optional
             Matplotlib axes.
         """
+        import matplotlib.pyplot as plt  # type: ignore
+
         if ax is None:
             _fig, ax = plt.subplots()
 
@@ -1600,6 +1598,8 @@ class BayFAIOpt:
         ax : plt.Axes, optional
             Matplotlib axes
         """
+        import matplotlib.pyplot as plt  # type: ignore
+
         if ax is None:
             _fig, ax = plt.subplots()
 
@@ -1698,6 +1698,11 @@ class BayFAIOpt:
         """
         Create an interactive powder image with calibrated overlapping 2θ rings.
         """
+        from bokeh.plotting import figure  # type: ignore
+        from bokeh.models import LinearColorMapper, HoverTool  # type: ignore
+        from bokeh.palettes import Viridis256, Category10  # type: ignore
+        from bokeh.models.annotations import Label  # type: ignore
+
         p1, p2, _ = self.detector.calc_cartesian_positions()
         # d1 = vertical (bottom→top), d2 = horizontal (left→right)
         y = np.reshape(p1, self.detector.calib_shape)
@@ -1833,6 +1838,9 @@ class BayFAIOpt:
         plot : str
             Path to save plot
         """
+        import matplotlib.pyplot as plt  # type: ignore
+        import matplotlib.patches as patches  # type: ignore
+
         fig = plt.figure(figsize=(8, 9), dpi=100)
         nrow, ncol = 3, 2
 
@@ -1952,6 +1960,9 @@ class BayFAIOpt:
         plot : str
             Path to save plot
         """
+        import matplotlib.pyplot as plt  # type: ignore
+        import matplotlib.patches as patches  # type: ignore
+
         fig = plt.figure(figsize=(9, 12), dpi=100)
         nrow, ncol = 4, 3
 
