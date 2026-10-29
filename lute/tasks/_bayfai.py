@@ -14,6 +14,10 @@ __all__ = [
 
 __author__ = "Louis Conreux"
 
+import time as _time
+
+_T_IMPORT0 = _time.time()
+
 from lute.execution.logging import get_logger
 
 import contextlib
@@ -49,7 +53,11 @@ from sklearn.gaussian_process import GaussianProcessRegressor  # type: ignore
 from sklearn.gaussian_process.kernels import Matern, ConstantKernel, WhiteKernel  # type: ignore
 from sklearn.utils._testing import ignore_warnings  # type: ignore
 from sklearn.exceptions import ConvergenceWarning  # type: ignore
+
+_t_mpi0 = _time.time()
 from mpi4py import MPI
+
+_t_mpi1 = _time.time()
 
 from LCLSGeom.manager import get_geometry  # type: ignore
 from LCLSGeom.converter import PsanaToPyFAI, PyFAIToPsana, PyFAIToCrystFEL  # type: ignore
@@ -286,6 +294,33 @@ class _SingleGeometry(SingleGeometry):
         self.geometry_refinement.data = np.asarray(cp.getList(), dtype=np.float64)
         return cp
 
+# BAYPHASE timing: name -> [t0 of first occurrence, summed dt, n]. Timing only.
+_PH: dict = {}
+
+
+def _ph_add(name, t0, t1):
+    e = _PH.setdefault(name, [t0, 0.0, 0])
+    e[1] += t1 - t0
+    e[2] += 1
+
+
+def _ph_emit(rank):
+    for name, (t0, dt, n) in _PH.items():
+        logger.info(f"BAYPHASE rank={rank} phase={name} t0={t0:.3f} dt={dt:.4f} n={n}")
+    _PH.clear()
+
+
+def _proc_start_epoch():
+    """Epoch seconds at which this process was forked (exec keeps PID and start time)."""
+    with open("/proc/self/stat") as f:
+        ticks = int(f.read().rsplit(")", 1)[1].split()[19])
+    with open("/proc/stat") as f:
+        btime = next(int(l.split()[1]) for l in f if l.startswith("btime"))
+    return btime + ticks / os.sysconf("SC_CLK_TCK")
+
+
+_ph_add("startup.mpi_import", _t_mpi0, _t_mpi1)
+_ph_add("startup.module_imports", _T_IMPORT0, _time.time())
 
 PHOTON_ENERGY_KEYS: tuple = (
     "ebeamh/ebeamPhotonEnergy",
@@ -340,6 +375,8 @@ class BayFAIOpt:
     run : int
         Run number
     """
+
+    _ph_stage = "init"  # BAYPHASE prefix for score() timings
 
     def __init__(
         self,
@@ -891,6 +928,8 @@ class BayFAIOpt:
             Scalar score for Bayesian optimization
         """
         dist, poni1, poni2, rot1, rot2, rot3 = sample
+        stage = self._ph_stage
+        t_geom = time.time()
         geom_sample = Geometry(
             dist=dist,
             poni1=poni1,
@@ -909,11 +948,15 @@ class BayFAIOpt:
             geometry=geom_sample,
         )
         self._fast_maps(sg.geometry_refinement)
+        t_cp = time.time()
+        _ph_add(stage + ".geometry", t_geom, t_cp)
         t0 = time.perf_counter()
         with _fast_extract_cp(max_rings):
             sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         data = sg.geometry_refinement.data
         t1 = time.perf_counter()
+        t_res = time.time()
+        _ph_add(stage + ".extract_cp", t_cp, t_res)
 
         if data is None or len(data) == 0:
             self.last_profile = (0, t1 - t0, 0.0)
@@ -925,6 +968,7 @@ class BayFAIOpt:
         score = -np.log(
             sg.geometry_refinement.residu2(sample, ix, iy, ring) / len(data)
         )
+        _ph_add(stage + ".residu2", t_res, time.time())
         self.last_profile = (len(data), t1 - t0, time.perf_counter() - t1)
         return score
 
@@ -1077,8 +1121,13 @@ class BayFAIOpt:
         gr.set_rot2_min(rot2 - step * resolutions["rot2"])
         gr.set_rot2_max(rot2 + step * resolutions["rot2"])
         fix = ["rot3", "wavelength"]
-        score = -np.log(gr.refine3(fix=fix))
+        t = time.time()
+        r = gr.refine3(fix=fix)
+        _ph_add("refine.refine3", t, time.time())
+        score = -np.log(r)
+        t = time.time()
         sigma, penalty = self.estimate_uncertainty(gr)
+        _ph_add("refine.estimate_uncertainty", t, time.time())
         params = gr.param
         self.gr = gr
         return score, sigma, penalty, params
@@ -1135,6 +1184,8 @@ class BayFAIOpt:
             Random seed for reproducibility. Offset by this rank's index so
             that every rank is independently seeded.
         """
+        t_init = time.time()
+        self._ph_stage = "init"
         if seed is not None:
             np.random.seed(seed + self.rank)
 
@@ -1177,6 +1228,8 @@ class BayFAIOpt:
                 logger.warning(
                     "Initial geometry guess is too far from optimum. Please refine the search space."
                 )
+            _ph_add("init", t_init, time.time())
+            _ph_emit(self.rank)
             return result
 
         if np.std(y) != 0:
@@ -1195,15 +1248,23 @@ class BayFAIOpt:
         gp_model = GaussianProcessRegressor(
             kernel=kernel, n_restarts_optimizer=10, random_state=0
         )
+        t = time.time()
         gp_model.fit(X_norm_samples, y_norm)
+        t_bo = time.time()
+        _ph_add("init.gp_fit", t, t_bo)
+        _ph_add("init", t_init, t_bo)
+        _ph_emit(self.rank)
         visited_idx = list([])
+        self._ph_stage = "bo"
 
         # 5. Run the Bayesian Optimization loop
         for i in range(n_iterations):
             # 6. Select the next point to evaluate
+            t = time.time()
             t_gp = time.perf_counter()
             next = self.UCB(X_norm, gp_model, visited_idx, beta, n_cand)
             t_gp = time.perf_counter() - t_gp
+            _ph_add("bo.ucb", t, time.time())
             next_sample = X[next]
             visited_idx.append(next)
 
@@ -1220,19 +1281,26 @@ class BayFAIOpt:
                 y_norm = y - np.mean(y)
 
             # 8. Update the Gaussian Process model
+            t = time.time()
             t_fit = time.perf_counter()
             if i < n_iterations - 1:  # the final refit is never read
                 gp_model.fit(X_norm_samples, y_norm)
+                _ph_add("bo.gp_fit", t, time.time())
             # t_gp covers the UCB pick plus the refit, i.e. the optimizer's own overhead.
             self.log_step(
                 "bo", i, next_sample, score, t_gp + time.perf_counter() - t_fit
             )
 
         # 9. Gather results
+        t_ref = time.time()
+        _ph_add("bo", t_bo, t_ref)
+        _ph_emit(self.rank)
         best_idx = np.argmax(y)
         best_param = X_samples[best_idx]
         t_refine = time.perf_counter()
+        t = time.time()
         data = self.extract_data(best_param, Imin, max_rings, pts_per_deg)
+        _ph_add("refine.extract_data", t, time.time())
         score, sigma, penalty, params = self.gradient_descent(
             best_param, data, res, step
         )
@@ -1240,6 +1308,8 @@ class BayFAIOpt:
             f"Rank {self.rank}: score={score:3e}, penalty={penalty:3e}, "
             f"t_refine={time.perf_counter() - t_refine:.3f}"
         )
+        _ph_add("refine", t_ref, time.time())
+        _ph_emit(self.rank)
         result = {
             "bo_history": bo_history,
             "params": params,
@@ -1336,7 +1406,10 @@ class BayFAIOpt:
         )
 
         # Gather BayFAI results from all ranks
+        t = time.time()
         self.comm.Barrier()
+        t_gather = time.time()
+        _ph_add("barrier", t, t_gather)
         self.scan = {}
         self.scan["bo_history"] = self.comm.gather(results["bo_history"], root=0)
         self.scan["params"] = self.comm.gather(results["params"], root=0)
@@ -1344,6 +1417,8 @@ class BayFAIOpt:
         self.scan["sigma"] = self.comm.gather(results["sigma"], root=0)
         self.scan["penalty"] = self.comm.gather(results["penalty"], root=0)
         self.scan["best_idx"] = self.comm.gather(results["best_idx"], root=0)
+        t_select = time.time()
+        _ph_add("gather", t_gather, t_select)
 
         # Winner selection
         if self.rank == 0:
@@ -1369,6 +1444,8 @@ class BayFAIOpt:
                 detector=self.detector,
                 wavelength=self.calibrant.wavelength,
             )
+            _ph_add("select", t_select, time.time())
+        _ph_emit(self.rank)
 
     def plot_radial_integration(self, result1d, calibrant, ax=None):
         """

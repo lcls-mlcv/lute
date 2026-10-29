@@ -9,7 +9,7 @@ Classes:
 __all__ = ["BayFAI"]
 __author__ = "Louis Conreux"
 
-from lute.tasks._bayfai import BayFAIOpt
+from lute.tasks._bayfai import BayFAIOpt, _ph_add, _ph_emit, _proc_start_epoch
 from lute.io.models.bayfai import BayFAIParameters
 
 from lute.tasks.task import Task
@@ -48,6 +48,9 @@ class BayFAI(Task):
             parallelized=self._task_parameters.parallelized,
             wavelength=self._task_parameters.wavelength,
         )
+        _ph_add("startup", _proc_start_epoch(), start_time)
+        _ph_add("setup", start_time, time.time())
+        _ph_emit(optimizer.rank)
         bayfai_hyperparams = {
             "n_samples": self._task_parameters.bayfai_params.n_samples,
             "n_iterations": self._task_parameters.bayfai_params.n_iterations,
@@ -67,6 +70,7 @@ class BayFAI(Task):
             res=self._task_parameters.resolutions,
             **bayfai_hyperparams,
         )
+        t_post0 = time.time()
         if optimizer.rank == 0:
             logger.info("Optimization complete")
             logger.info(f"Elapsed time: {time.time() - start_time:.2f} s")
@@ -86,12 +90,16 @@ class BayFAI(Task):
             )
             os.makedirs(fig_folder, exist_ok=True)
             plot = f"{fig_folder}/bayFAI_summary_{optimizer.exp}_r{optimizer.run:0>4}_{self._task_parameters.detname}.png"
+            t = time.time()
             optimizer.update_geometry(
                 self._task_parameters.out_file, self._task_parameters.detname
             )
+            t_plots = time.time()
+            _ph_add("post.update_geometry", t, t_plots)
             powder_plot, qs, resolutions = optimizer.create_interactive_powder()
             diagnostics_plot = optimizer.create_diagnostics_panel()
             _ = optimizer.create_summary_plot(plot=plot)
+            _ph_add("post.plots", t_plots, time.time())
             pn.extension("matplotlib", "bokeh")
             plots = pn.Row(
                 pn.pane.Matplotlib(diagnostics_plot, sizing_mode="fixed"),
@@ -111,10 +119,12 @@ class BayFAI(Task):
                 plots,
                 sizing_mode="stretch_width",
             )
+            t = time.time()
             content.save(
                 f"{fig_folder}/bayFAI_summary_{optimizer.exp}_r{optimizer.run:0>4}_{self._task_parameters.detname}.html",
                 embed=True,
             )
+            _ph_add("post.html_save", t, time.time())
             plots = pn.Tabs(content)
             self._result.summary = []
             self._result.summary.append(
@@ -141,3 +151,7 @@ class BayFAI(Task):
                 )
             )
             self._result.task_status = TaskStatus.COMPLETED
+            _ph_add("post", t_post0, time.time())
+        t = time.time()
+        _ph_add("run_end", t, t)
+        _ph_emit(optimizer.rank)
