@@ -763,6 +763,8 @@ class BayFAIOpt:
                     low, high = high, low
                 step = res[p]
                 full_params[p] = np.arange(low, high + step, step)
+                if p == "dist" and getattr(self, "tile", None) is not None:
+                    full_params[p] = np.array(self.tile)  # arange can give 3 points
                 search_params[p] = full_params[p]
             else:
                 full_params[p] = np.array([center[p]])
@@ -1331,6 +1333,7 @@ class BayFAIOpt:
         lbda=0.1,
         seed=None,
         n_cand=None,
+        tiling=None,
     ):
         """
         Run BayFAI optimization.
@@ -1367,9 +1370,29 @@ class BayFAIOpt:
             Random seed for reproducibility
         n_cand : optional, int
             Number of random grid candidates scored by UCB per step (None/0 = whole grid)
+        tiling : optional, dict
+            {mode: 'geometric', min, max}: with parallelized='dist', rank r gets the window
+            [b_r, b_r+1] of b = min*(max/min)**(arange(size+1)/size) (2 grid points, refinement
+            +-step*w_r) instead of the linear grid. Ignored unless parallelized == 'dist'.
         """
-        # Distribute the parallelized parameter's window across MPI ranks
-        value = self.distribute_parallelized(center, res)
+        if self.parallelized == "dist" and tiling is not None:
+            if tiling.get("mode") != "geometric":
+                raise ValueError(f"Unknown tiling mode {tiling.get('mode')!r}")
+            tmin, tmax = tiling["min"], tiling["max"]
+            b = tmin * (tmax / tmin) ** (np.arange(self.size + 1) / self.size)
+            lo, hi = b[self.rank], b[self.rank + 1]
+            w = hi - lo
+            value = (lo + hi) / 2
+            center, bounds, res = dict(center), dict(bounds), dict(res)
+            center["dist"], bounds["dist"], res["dist"] = value, (-w / 2, w / 2), w
+            self.param_values = (b[:-1] + b[1:]) / 2
+            self.tile = (lo, hi)
+            logger.info(
+                f"tiling rank={self.rank} lo={lo:.6f} hi={hi:.6f} w={w:.6f} refine=+-{step * w:.6f}"
+            )
+        else:
+            # Distribute the parallelized parameter's window across MPI ranks
+            value = self.distribute_parallelized(center, res)
         if self.rank == 0:
             if self.parallelized is not None:
                 logger.info(

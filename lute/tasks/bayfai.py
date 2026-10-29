@@ -67,6 +67,7 @@ class BayFAI(Task):
             center=self._task_parameters.center,
             bounds=self._task_parameters.bounds,
             res=self._task_parameters.resolutions,
+            tiling=self._task_parameters.tiling,
             **bayfai_hyperparams,
         )
         t_post0 = time.time()

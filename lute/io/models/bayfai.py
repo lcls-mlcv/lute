@@ -109,6 +109,13 @@ class BayFAIParameters(TaskParameters):
         "sliding window (e.g. 'dist'). If None, all ranks instead run BO over the same space.",
     )
 
+    tiling: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Per-rank tiling of the parallelized 'dist' axis, e.g. "
+        "{mode: geometric, min: 0.0348, max: 0.4002}: rank r searches [b_r, b_r+1] with "
+        "b = min*(max/min)**(r/size). Replaces dist center/bounds/resolutions. None = linear grid.",
+    )
+
     fixed: List[str] = Field(
         ["rot3"],
         description="List of fixed parameters for the optimization (rot3 is fixed by default) "
