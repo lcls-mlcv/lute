@@ -1792,5 +1792,11 @@ class MPIExecutor(Executor):
                 f"{self._py_executable} -O -u -m mpi4py.run {executable_path} {params}"
             )
 
+        # shell_source stores it only as LUTE_TENV_, which this first interpreter never reads.
+        pycache: Optional[str] = self._analysis_desc.task_env.get(
+            "LUTE_TENV_PYTHONPYCACHEPREFIX"
+        )
+        if pycache:
+            py_cmd = f"env PYTHONPYCACHEPREFIX={pycache} {py_cmd}"
         cmd: str = f"{mpi_cmd} {py_cmd}"
         return cmd
