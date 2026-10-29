@@ -115,7 +115,13 @@ class _Massif(pyFAI.massif.Massif):
     """Massif whose peaks_from_area scans only the mask's row band (same points, order, RNG draws)."""
 
     def peaks_from_area(
-        self, mask, Imin=np.finfo(np.float64).min, keep=1000, dmin=0.0, seed=None, **kwarg
+        self,
+        mask,
+        Imin=np.finfo(np.float64).min,
+        keep=1000,
+        dmin=0.0,
+        seed=None,
+        **kwarg,
     ):
         """Verbatim pyFAI 2024.9 Massif.peaks_from_area except for the all_points line."""
         res = []
@@ -161,11 +167,14 @@ class _Massif(pyFAI.massif.Massif):
 @contextlib.contextmanager
 def _fast_extract_cp(max_rings):
     """Patches active around sg.extract_cp(max_rings=...); outputs and global RNG draws are unchanged."""
-    with mock.patch.object(
-        pyFAI.goniometer,
-        "build_qmask",
-        functools.partial(_qmask_first, max_rings=max_rings),
-    ), mock.patch.object(pyFAI.goniometer, "Massif", _Massif):
+    with (
+        mock.patch.object(
+            pyFAI.goniometer,
+            "build_qmask",
+            functools.partial(_qmask_first, max_rings=max_rings),
+        ),
+        mock.patch.object(pyFAI.goniometer, "Massif", _Massif),
+    ):
         yield
 
 
