@@ -840,9 +840,15 @@ class BayFAIOpt:
         if np.all(y == 0.0):
             result = {
                 "bo_history": bo_history,
-                "params": center,
-                "data": [],
+                "params": np.array(
+                    [
+                        center[k]
+                        for k in ("dist", "poni1", "poni2", "rot1", "rot2", "rot3")
+                    ]
+                ),
                 "score": 0.0,
+                "sigma": [np.inf] * 5,
+                "penalty": 0.0,
                 "best_idx": 0,
             }
             if self.rank == 0:
