@@ -16,6 +16,7 @@ __author__ = "Louis Conreux"
 
 from lute.execution.logging import get_logger
 
+import gc
 import os
 import time
 from typing import Optional
@@ -196,6 +197,9 @@ class BayFAIOpt:
         self.powder = self.generate_powder(h5, detname, Imin)
         self.calibrant = self.define_calibrant(calibrant, h5, wavelength)
         self.set_search_space(parallelized, fixed)
+        # pyFAI's poni setters reset engines and call gc.collect() on every geometry build;
+        # freezing the post-import/setup heap keeps those collections from rescanning it.
+        gc.freeze()
 
     def extract_powder(self, powder_path: str, detname: str) -> npt.NDArray[np.float64]:
         """
