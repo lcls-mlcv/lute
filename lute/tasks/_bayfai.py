@@ -122,7 +122,7 @@ class BayFAIOpt:
     @staticmethod
     def UCB(X, gp_model, visited_idx, beta=1.96, n_cand=None):
         """Return the index into X of the best unvisited UCB point, among n_cand random ones if set."""
-        idx = np.setdiff1d(np.arange(len(X)), visited_idx)
+        idx = np.delete(np.arange(len(X)), visited_idx)
         if n_cand and len(idx) > n_cand:
             idx = np.random.choice(idx, n_cand, replace=False)
         y_pred, y_std = gp_model.predict(X[idx], return_std=True)
@@ -942,7 +942,8 @@ class BayFAIOpt:
 
             # 8. Update the Gaussian Process model
             t_fit = time.perf_counter()
-            gp_model.fit(X_norm_samples, y_norm)
+            if i < n_iterations - 1:  # the final refit is never read
+                gp_model.fit(X_norm_samples, y_norm)
             # t_gp covers the UCB pick plus the refit, i.e. the optimizer's own overhead.
             self.log_step(
                 "bo", i, next_sample, score, t_gp + time.perf_counter() - t_fit
