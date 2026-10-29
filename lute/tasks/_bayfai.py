@@ -16,10 +16,13 @@ __author__ = "Louis Conreux"
 
 from lute.execution.logging import get_logger
 
+import contextlib
+import functools
 import gc
 import os
 import time
 from typing import Optional
+from unittest import mock
 import numpy as np
 import numpy.typing as npt
 import logging
@@ -32,6 +35,8 @@ from bokeh.palettes import Viridis256, Category10  # type: ignore
 from bokeh.models.annotations import Label  # type: ignore
 import h5py  # type: ignore
 import pyFAI  # type: ignore
+import pyFAI.goniometer  # type: ignore
+from pyFAI.ext.mathutil import build_qmask  # type: ignore
 from pyFAI.geometry import Geometry  # type: ignore
 from pyFAI.geometry.core import _geometry  # type: ignore
 from pyFAI.goniometer import SingleGeometry  # type: ignore
@@ -90,6 +95,31 @@ class WhiteKernel(_CachedKernelNames, WhiteKernel):
 
 
 logger: logging.Logger = get_logger(__name__)
+
+
+def _qmask_first(ttha, tth_min, tth_max, mask, max_rings):
+    """build_qmask over the first max_rings+2 2theta intervals only; full call if too few are non-empty."""
+    # ponytail: identical because the intervals do not overlap and extract_cp's ring loop breaks before index K.
+    n = len(tth_min)
+    K = min(n, max_rings + 2)
+    if K == n:
+        return build_qmask(ttha, tth_min, tth_max, mask)
+    qmask, count = build_qmask(ttha, tth_min[:K], tth_max[:K], mask)
+    if np.count_nonzero(count) < max_rings:
+        return build_qmask(ttha, tth_min, tth_max, mask)
+    return qmask, np.concatenate((count, np.zeros(n - K, dtype=count.dtype)))
+
+
+@contextlib.contextmanager
+def _fast_extract_cp(max_rings):
+    """Patches active around sg.extract_cp(max_rings=...); outputs and global RNG draws are unchanged."""
+    with mock.patch.object(
+        pyFAI.goniometer,
+        "build_qmask",
+        functools.partial(_qmask_first, max_rings=max_rings),
+    ):
+        yield
+
 
 PHOTON_ENERGY_KEYS: tuple = (
     "ebeamh/ebeamPhotonEnergy",
@@ -672,7 +702,8 @@ class BayFAIOpt:
             geometry=geom_sample,
         )
         self._fast_maps(sg.geometry_refinement)
-        sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
+        with _fast_extract_cp(max_rings):
+            sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         return sg.geometry_refinement.data
 
     def score(self, sample, Imin, max_rings, pts_per_deg):
@@ -713,7 +744,8 @@ class BayFAIOpt:
         )
         self._fast_maps(sg.geometry_refinement)
         t0 = time.perf_counter()
-        sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
+        with _fast_extract_cp(max_rings):
+            sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         data = sg.geometry_refinement.data
         t1 = time.perf_counter()
 
