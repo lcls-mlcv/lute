@@ -59,6 +59,7 @@ class BayFAI(Task):
             "lbda": self._task_parameters.bayfai_params.lbda,
             "seed": self._task_parameters.bayfai_params.seed,
             "n_cand": self._task_parameters.bayfai_params.n_cand,
+            "gp_restarts": self._task_parameters.bayfai_params.gp_restarts,
         }
         optimizer.bayfai_opt(
             center=self._task_parameters.center,

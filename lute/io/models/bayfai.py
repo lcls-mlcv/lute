@@ -103,6 +103,11 @@ class BayFAIParameters(TaskParameters):
             description="Number of random grid points scored by UCB per BO step (0 or None = whole grid).",
         )
 
+        gp_restarts: int = Field(
+            default=10,
+            description="n_restarts_optimizer of the GP kernel-hyperparameter fit (sklearn GaussianProcessRegressor).",
+        )
+
     parallelized: Optional[str] = Field(
         None,
         description="Name of the geometry parameter to distribute across MPI ranks as a "

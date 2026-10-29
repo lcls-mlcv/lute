@@ -1113,6 +1113,7 @@ class BayFAIOpt:
         step=5,
         seed=None,
         n_cand=None,
+        gp_restarts=10,
     ):
         """
         Run Bayesian Optimization on this MPI rank's search space.
@@ -1147,6 +1148,8 @@ class BayFAIOpt:
         seed : optional, int
             Random seed for reproducibility. Offset by this rank's index so
             that every rank is independently seeded.
+        gp_restarts : int
+            n_restarts_optimizer of the GP kernel-hyperparameter fit
         """
         if seed is not None:
             np.random.seed(seed + self.rank)
@@ -1205,7 +1208,7 @@ class BayFAIOpt:
             noise_level=0.001, noise_level_bounds="fixed"
         )
         gp_model = GaussianProcessRegressor(
-            kernel=kernel, n_restarts_optimizer=10, random_state=0
+            kernel=kernel, n_restarts_optimizer=gp_restarts, random_state=0
         )
         gp_model.fit(X_norm_samples, y_norm)
         visited_idx = list([])
@@ -1268,6 +1271,7 @@ class BayFAIOpt:
         seed=None,
         n_cand=None,
         dist_spacing="geometric",
+        gp_restarts=10,
     ):
         """
         Run BayFAI optimization.
@@ -1307,6 +1311,8 @@ class BayFAIOpt:
         dist_spacing : str
             'geometric' (default) or 'linear' split of bounds['dist'] across ranks when
             parallelized == 'dist'
+        gp_restarts : int
+            n_restarts_optimizer of the GP kernel-hyperparameter fit
         """
         # Split the parallelized parameter's absolute bounds into one window per MPI rank
         res = dict(res)
@@ -1330,6 +1336,7 @@ class BayFAIOpt:
             "prior": prior,
             "seed": seed,
             "n_cand": n_cand,
+            "gp_restarts": gp_restarts,
         }
 
         # Run BO on this rank's search space
