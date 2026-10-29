@@ -178,6 +178,113 @@ def _fast_extract_cp(max_rings):
         yield
 
 
+def _row_runs(rows):
+    """Contiguous runs of the sorted row indices, as slices in row order."""
+    cut = np.flatnonzero(np.diff(rows) > 1)
+    starts, ends = np.r_[rows[0], rows[cut + 1]], np.r_[rows[cut], rows[-1]]
+    return [slice(int(a), int(b) + 1) for a, b in zip(starts, ends)]
+
+
+class _SingleGeometry(SingleGeometry):
+    """SingleGeometry whose extract_cp does the per-ring mask ops on the ring's row band only."""
+
+    def extract_cp(self, max_rings=None, pts_per_deg=1.0, Imin=0):
+        """Verbatim pyFAI 2024.9 SingleGeometry.extract_cp except for the ring-loop mask ops."""
+        G = pyFAI.goniometer
+        if self.massif is None:
+            if self.detector:
+                mask = self.detector.dynamic_mask(self.image)
+            else:
+                mask = None
+            self.massif = G.Massif(self.image, mask)
+
+        tth = np.array([i for i in self.calibrant.get_2th() if i is not None])
+        tth = np.unique(tth)
+        tth_min = np.zeros_like(tth)
+        tth_max = np.zeros_like(tth)
+        delta = (tth[1:] - tth[:-1]) / 4.0
+        tth_max[:-1] = delta
+        tth_max[-1] = delta[-1]
+        tth_min[1:] = -delta
+        tth_min[0] = -delta[0]
+        tth_max += tth
+        tth_min += tth
+        shape = self.image.shape
+        ttha = self.geometry_refinement.twoThetaArray(shape)
+        chia = self.geometry_refinement.chiArray(shape)
+        rings = 0
+        cp = G.ControlPoints(calibrant=self.calibrant)
+        if max_rings is None:
+            max_rings = tth.size
+
+        qmask, count = G.build_qmask(
+            ttha, tth_min, tth_max, self.geometry_refinement.detector.mask
+        )
+        # ponytail: identical because ring i only lives in rows with lo <= i <= hi; outside them stock's
+        # qmask == i and mask2 are all False (mask2 kept zero there), and row-major order is preserved.
+        mask2 = np.zeros(qmask.shape, dtype=bool)
+        hi = qmask.max(axis=1)
+        lo = np.where(qmask < 0, count.size, qmask).min(axis=1)
+        prev = []
+        ms = G.marchingsquares.MarchingSquaresMergeImpl(
+            ttha, mask=self.geometry_refinement.detector.mask, use_minmax_cache=True
+        )
+        for i in range(tth.size):
+            if rings >= max_rings:
+                break
+            if count[i]:
+                rings += 1
+                runs = _row_runs(np.flatnonzero((lo <= i) & (hi >= i)))
+                for s in prev:
+                    mask2[s] = False
+                prev = runs
+                masks = [qmask[s] == i for s in runs]
+                parts = [self.image[s][m] for s, m in zip(runs, masks)]
+                sub_data = parts[0] if len(parts) == 1 else np.concatenate(parts)
+                mean = sub_data.mean(dtype=np.float64)
+                std = sub_data.std(dtype=np.float64)
+                upper_limit = mean + std
+                for s, m in zip(runs, masks):
+                    np.logical_and(self.image[s] > upper_limit, m, out=mask2[s])
+                size2 = sum(int(mask2[s].sum(dtype=int)) for s in runs)
+                if size2 < 1000:
+                    upper_limit = mean
+                    for s, m in zip(runs, masks):
+                        np.logical_and(self.image[s] > upper_limit, m, out=mask2[s])
+                    size2 = sum(int(mask2[s].sum()) for s in runs)
+                # length of the arc:
+                points = ms.find_pixels(tth[i])
+                seeds = set((i[0], i[1]) for i in points if mask2[i[0], i[1]])
+                # max number of points: 360 points for a full circle
+                azimuthal = chia[
+                    points[:, 0].clip(0, shape[0]), points[:, 1].clip(0, shape[1])
+                ]
+                nb_deg_azim = np.unique(np.rad2deg(azimuthal).round()).size
+                keep = int(nb_deg_azim * pts_per_deg)
+                if keep == 0:
+                    continue
+                dist_min = len(seeds) / 2.0 / keep
+                # why 3.0, why not ?
+
+                G.logger.info(
+                    "Extracting datapoint for ring %s (2theta = %.2f deg); "
+                    + "searching for %i pts out of %i with I>%.1f, dmin=%.1f",
+                    i,
+                    np.degrees(tth[i]),
+                    keep,
+                    size2,
+                    upper_limit,
+                    dist_min,
+                )
+                res = self.massif.peaks_from_area(
+                    mask2, Imin=Imin, keep=keep, dmin=dist_min, seed=seeds, ring=i
+                )
+                cp.append(res, i)
+        self.control_points = cp
+        self.geometry_refinement.data = np.asarray(cp.getList(), dtype=np.float64)
+        return cp
+
+
 PHOTON_ENERGY_KEYS: tuple = (
     "ebeamh/ebeamPhotonEnergy",
     "ebeam/ebeamPhotonEnergy",
@@ -751,7 +858,7 @@ class BayFAIOpt:
             detector=self.detector,
             wavelength=self.calibrant.wavelength,
         )
-        sg = SingleGeometry(
+        sg = _SingleGeometry(
             "Data Extraction Geometry",
             self.stacked_powder,
             calibrant=self.calibrant,
@@ -792,7 +899,7 @@ class BayFAIOpt:
             detector=self.detector,
             wavelength=self.calibrant.wavelength,
         )
-        sg = SingleGeometry(
+        sg = _SingleGeometry(
             "Score Geometry",
             self.stacked_powder,
             calibrant=self.calibrant,
