@@ -36,6 +36,7 @@ from bokeh.models.annotations import Label  # type: ignore
 import h5py  # type: ignore
 import pyFAI  # type: ignore
 import pyFAI.goniometer  # type: ignore
+import pyFAI.massif  # type: ignore
 from pyFAI.ext.mathutil import build_qmask  # type: ignore
 from pyFAI.geometry import Geometry  # type: ignore
 from pyFAI.geometry.core import _geometry  # type: ignore
@@ -110,6 +111,53 @@ def _qmask_first(ttha, tth_min, tth_max, mask, max_rings):
     return qmask, np.concatenate((count, np.zeros(n - K, dtype=count.dtype)))
 
 
+class _Massif(pyFAI.massif.Massif):
+    """Massif whose peaks_from_area scans only the mask's row band (same points, order, RNG draws)."""
+
+    def peaks_from_area(
+        self, mask, Imin=np.finfo(np.float64).min, keep=1000, dmin=0.0, seed=None, **kwarg
+    ):
+        """Verbatim pyFAI 2024.9 Massif.peaks_from_area except for the all_points line."""
+        res = []
+        cnt = 0
+        dmin2 = dmin * dmin
+
+        # ponytail: same intp values in row-major order as np.where(mask), np.where over the rows that hold points only.
+        rows = np.flatnonzero(mask.any(axis=1))
+        if rows.size:
+            w = np.nonzero(mask[rows[0] : rows[-1] + 1])
+            all_points = np.vstack((w[0] + rows[0], w[1])).T
+        else:
+            all_points = np.vstack(np.where(mask)).T
+        if len(all_points) > 0:
+            np.random.shuffle(all_points)
+
+        if seed:
+            seeds = np.array(list(seed))
+            if len(seeds) > 0:
+                np.random.shuffle(seeds)
+            all_points = np.concatenate((seeds, all_points))
+
+        msg = "[ %3i, %3i ] -> [ %.1f, %.1f ]"
+        for idx in all_points:
+            out = self.nearest_peak(idx)
+            if out is not None:
+
+                pyFAI.massif.logger.debug(msg, idx[1], idx[0], out[1], out[0])
+                p0, p1 = int(round(out[0])), int(round(out[1]))
+                if mask[p0, p1]:
+                    if (self.data[p0, p1] > Imin) and pyFAI.massif.is_far_from_group(
+                        out, res, dmin2
+                    ):
+                        res.append(out)
+                        cnt = 0
+            if len(res) >= keep or cnt > keep:
+                break
+            else:
+                cnt += 1
+        return res
+
+
 @contextlib.contextmanager
 def _fast_extract_cp(max_rings):
     """Patches active around sg.extract_cp(max_rings=...); outputs and global RNG draws are unchanged."""
@@ -117,7 +165,7 @@ def _fast_extract_cp(max_rings):
         pyFAI.goniometer,
         "build_qmask",
         functools.partial(_qmask_first, max_rings=max_rings),
-    ):
+    ), mock.patch.object(pyFAI.goniometer, "Massif", _Massif):
         yield
 
 
