@@ -192,7 +192,7 @@ def main() -> None:
         if __debug__:
             os.execlp("python", "python", "-B", "-c", exec_script)
         else:
-            os.execlp("python", "python", "-OB", "-c", exec_script)
+            os.execlp("python", "python", "-O", "-c", exec_script)
 
 
 if __name__ == "__main__":
