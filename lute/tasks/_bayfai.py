@@ -16,8 +16,12 @@ __author__ = "Louis Conreux"
 
 from lute.execution.logging import get_logger
 
+import contextlib
+import functools
+import gc
 import os
 from typing import Optional
+from unittest import mock
 import numpy as np
 import numpy.typing as npt
 import logging
@@ -30,7 +34,11 @@ from bokeh.palettes import Viridis256, Category10  # type: ignore
 from bokeh.models.annotations import Label  # type: ignore
 import h5py  # type: ignore
 import pyFAI  # type: ignore
+import pyFAI.goniometer  # type: ignore
+import pyFAI.massif  # type: ignore
+from pyFAI.ext.mathutil import build_qmask  # type: ignore
 from pyFAI.geometry import Geometry  # type: ignore
+from pyFAI.geometry.core import _geometry  # type: ignore
 from pyFAI.goniometer import SingleGeometry  # type: ignore
 from pyFAI.geometryRefinement import GeometryRefinement  # type: ignore
 from pyFAI.calibrant import CALIBRANT_FACTORY  # type: ignore
@@ -48,7 +56,235 @@ from LCLSGeom.utils.pyfai_utils import pyfai_to_image_poni  # type: ignore
 
 pyFAI.use_opencl = False
 
+
+class _CachedKernelNames:
+    """Cache, per kernel class, the names sklearn recomputes on every theta access.
+
+    Stock leaf kernels run inspect.signature (get_params) and dir() (hyperparameters)
+    on each L-BFGS objective call; only the names are cached, values are always read.
+    """
+
+    def get_params(self, deep=True):
+        cls = type(self)
+        names = cls.__dict__.get("_param_names")
+        if names is None:
+            names = cls._param_names = tuple(super().get_params(deep=False))
+        return {name: getattr(self, name) for name in names}
+
+    @property
+    def hyperparameters(self):
+        cls = type(self)
+        names = cls.__dict__.get("_hp_names")
+        if names is None:
+            names = cls._hp_names = sorted(
+                a for a in dir(cls) if a.startswith("hyperparameter_")
+            )
+        return [getattr(self, a) for a in names]
+
+
+class Matern(_CachedKernelNames, Matern):
+    pass
+
+
+class ConstantKernel(_CachedKernelNames, ConstantKernel):
+    pass
+
+
+class WhiteKernel(_CachedKernelNames, WhiteKernel):
+    pass
+
+
 logger: logging.Logger = get_logger(__name__)
+
+
+def _qmask_first(ttha, tth_min, tth_max, mask, max_rings):
+    """build_qmask over the first max_rings+2 2theta intervals only; full call if too few are non-empty."""
+    # ponytail: identical because the intervals do not overlap and extract_cp's ring loop breaks before index K.
+    n = len(tth_min)
+    K = min(n, max_rings + 2)
+    if K == n:
+        return build_qmask(ttha, tth_min, tth_max, mask)
+    qmask, count = build_qmask(ttha, tth_min[:K], tth_max[:K], mask)
+    if np.count_nonzero(count) < max_rings:
+        return build_qmask(ttha, tth_min, tth_max, mask)
+    return qmask, np.concatenate((count, np.zeros(n - K, dtype=count.dtype)))
+
+
+class _Massif(pyFAI.massif.Massif):
+    """Massif whose peaks_from_area scans only the mask's row band (same points, order, RNG draws)."""
+
+    def peaks_from_area(
+        self,
+        mask,
+        Imin=np.finfo(np.float64).min,
+        keep=1000,
+        dmin=0.0,
+        seed=None,
+        **kwarg,
+    ):
+        """Verbatim pyFAI 2024.9 Massif.peaks_from_area except for the all_points and shuffle lines."""
+        res = []
+        cnt = 0
+        dmin2 = dmin * dmin
+
+        # ponytail: same intp values in row-major order as np.where(mask), np.where over the rows that hold points only.
+        rows = np.flatnonzero(mask.any(axis=1))
+        if rows.size:
+            w = np.nonzero(mask[rows[0] : rows[-1] + 1])
+            all_points = np.vstack((w[0] + rows[0], w[1])).T
+        else:
+            all_points = np.vstack(np.where(mask)).T
+        # ponytail: legacy RandomState.permutation(n) is arange(n) plus the same Fisher-Yates random_interval(i),
+        # i = n-1..1, as shuffle's multi-dim path: same draws, same rows, without the per-row bounce buffer.
+        if len(all_points) > 0:
+            all_points = all_points[np.random.permutation(len(all_points))]
+
+        if seed:
+            seeds = np.array(list(seed))
+            if len(seeds) > 0:
+                seeds = seeds[np.random.permutation(len(seeds))]
+            all_points = np.concatenate((seeds, all_points))
+
+        msg = "[ %3i, %3i ] -> [ %.1f, %.1f ]"
+        for idx in all_points:
+            out = self.nearest_peak(idx)
+            if out is not None:
+
+                pyFAI.massif.logger.debug(msg, idx[1], idx[0], out[1], out[0])
+                p0, p1 = int(round(out[0])), int(round(out[1]))
+                if mask[p0, p1]:
+                    if (self.data[p0, p1] > Imin) and pyFAI.massif.is_far_from_group(
+                        out, res, dmin2
+                    ):
+                        res.append(out)
+                        cnt = 0
+            if len(res) >= keep or cnt > keep:
+                break
+            else:
+                cnt += 1
+        return res
+
+
+@contextlib.contextmanager
+def _fast_extract_cp(max_rings):
+    """Patches active around sg.extract_cp(max_rings=...); outputs and global RNG draws are unchanged."""
+    with (
+        mock.patch.object(
+            pyFAI.goniometer,
+            "build_qmask",
+            functools.partial(_qmask_first, max_rings=max_rings),
+        ),
+        mock.patch.object(pyFAI.goniometer, "Massif", _Massif),
+    ):
+        yield
+
+
+def _row_runs(rows):
+    """Contiguous runs of the sorted row indices, as slices in row order."""
+    cut = np.flatnonzero(np.diff(rows) > 1)
+    starts, ends = np.r_[rows[0], rows[cut + 1]], np.r_[rows[cut], rows[-1]]
+    return [slice(int(a), int(b) + 1) for a, b in zip(starts, ends)]
+
+
+class _SingleGeometry(SingleGeometry):
+    """SingleGeometry whose extract_cp does the per-ring mask ops on the ring's row band only."""
+
+    def extract_cp(self, max_rings=None, pts_per_deg=1.0, Imin=0):
+        """Verbatim pyFAI 2024.9 SingleGeometry.extract_cp except for the ring-loop mask ops."""
+        G = pyFAI.goniometer
+        if self.massif is None:
+            if self.detector:
+                mask = self.detector.dynamic_mask(self.image)
+            else:
+                mask = None
+            self.massif = G.Massif(self.image, mask)
+
+        tth = np.array([i for i in self.calibrant.get_2th() if i is not None])
+        tth = np.unique(tth)
+        tth_min = np.zeros_like(tth)
+        tth_max = np.zeros_like(tth)
+        delta = (tth[1:] - tth[:-1]) / 4.0
+        tth_max[:-1] = delta
+        tth_max[-1] = delta[-1]
+        tth_min[1:] = -delta
+        tth_min[0] = -delta[0]
+        tth_max += tth
+        tth_min += tth
+        shape = self.image.shape
+        ttha = self.geometry_refinement.twoThetaArray(shape)
+        chia = self.geometry_refinement.chiArray(shape)
+        rings = 0
+        cp = G.ControlPoints(calibrant=self.calibrant)
+        if max_rings is None:
+            max_rings = tth.size
+
+        qmask, count = G.build_qmask(
+            ttha, tth_min, tth_max, self.geometry_refinement.detector.mask
+        )
+        # ponytail: identical because ring i only lives in rows with lo <= i <= hi; outside them stock's
+        # qmask == i and mask2 are all False (mask2 kept zero there), and row-major order is preserved.
+        mask2 = np.zeros(qmask.shape, dtype=bool)
+        hi = qmask.max(axis=1)
+        lo = np.where(qmask < 0, count.size, qmask).min(axis=1)
+        prev = []
+        ms = G.marchingsquares.MarchingSquaresMergeImpl(
+            ttha, mask=self.geometry_refinement.detector.mask, use_minmax_cache=True
+        )
+        for i in range(tth.size):
+            if rings >= max_rings:
+                break
+            if count[i]:
+                rings += 1
+                runs = _row_runs(np.flatnonzero((lo <= i) & (hi >= i)))
+                for s in prev:
+                    mask2[s] = False
+                prev = runs
+                masks = [qmask[s] == i for s in runs]
+                parts = [self.image[s][m] for s, m in zip(runs, masks)]
+                sub_data = parts[0] if len(parts) == 1 else np.concatenate(parts)
+                mean = sub_data.mean(dtype=np.float64)
+                std = sub_data.std(dtype=np.float64)
+                upper_limit = mean + std
+                for s, m in zip(runs, masks):
+                    np.logical_and(self.image[s] > upper_limit, m, out=mask2[s])
+                size2 = sum(int(mask2[s].sum(dtype=int)) for s in runs)
+                if size2 < 1000:
+                    upper_limit = mean
+                    for s, m in zip(runs, masks):
+                        np.logical_and(self.image[s] > upper_limit, m, out=mask2[s])
+                    size2 = sum(int(mask2[s].sum()) for s in runs)
+                # length of the arc:
+                points = ms.find_pixels(tth[i])
+                seeds = set((i[0], i[1]) for i in points if mask2[i[0], i[1]])
+                # max number of points: 360 points for a full circle
+                azimuthal = chia[
+                    points[:, 0].clip(0, shape[0]), points[:, 1].clip(0, shape[1])
+                ]
+                nb_deg_azim = np.unique(np.rad2deg(azimuthal).round()).size
+                keep = int(nb_deg_azim * pts_per_deg)
+                if keep == 0:
+                    continue
+                dist_min = len(seeds) / 2.0 / keep
+                # why 3.0, why not ?
+
+                G.logger.info(
+                    "Extracting datapoint for ring %s (2theta = %.2f deg); "
+                    + "searching for %i pts out of %i with I>%.1f, dmin=%.1f",
+                    i,
+                    np.degrees(tth[i]),
+                    keep,
+                    size2,
+                    upper_limit,
+                    dist_min,
+                )
+                res = self.massif.peaks_from_area(
+                    mask2, Imin=Imin, keep=keep, dmin=dist_min, seed=seeds, ring=i
+                )
+                cp.append(res, i)
+        self.control_points = cp
+        self.geometry_refinement.data = np.asarray(cp.getList(), dtype=np.float64)
+        return cp
+
 
 PHOTON_ENERGY_KEYS: tuple = (
     "ebeamh/ebeamPhotonEnergy",
@@ -120,7 +356,7 @@ class BayFAIOpt:
     @staticmethod
     def UCB(X, gp_model, visited_idx, beta=1.96, n_cand=None):
         """Return the index into X of the best unvisited UCB point, among n_cand random ones if set."""
-        idx = np.setdiff1d(np.arange(len(X)), visited_idx)
+        idx = np.delete(np.arange(len(X)), visited_idx)
         if n_cand and len(idx) > n_cand:
             idx = np.random.choice(idx, n_cand, replace=False)
         y_pred, y_std = gp_model.predict(X[idx], return_std=True)
@@ -173,9 +409,31 @@ class BayFAIOpt:
             Minimum intensity value for identifying Bragg peaks
         """
         self.detector = self.build_detector(detname)
+        # twoThetaArray/chiArray recompute full-grid pixel positions (geometry-independent) on every
+        # BO evaluation via fromfunction index arrays; pyFAI callers copy (p1 - poni1), never mutate.
+        pos, calc = (
+            self.detector.calc_cartesian_positions(),
+            self.detector.calc_cartesian_positions,
+        )
+        for a in pos:
+            if a is not None:
+                a.flags.writeable = False
+        self.detector.calc_cartesian_positions = (
+            lambda d1=None, d2=None, center=True, use_cython=True: (
+                pos
+                if center
+                and all(
+                    d is None or np.shape(d) == self.detector.shape for d in (d1, d2)
+                )
+                else calc(d1, d2, center, use_cython)
+            )
+        )
         self.powder = self.generate_powder(h5, detname, Imin)
         self.calibrant = self.define_calibrant(calibrant, h5, wavelength)
         self.set_search_space(parallelized, fixed)
+        # pyFAI's poni setters reset engines and call gc.collect() on every geometry build;
+        # freezing the post-import/setup heap keeps those collections from rescanning it.
+        gc.freeze()
 
     def extract_powder(self, powder_path: str, detname: str) -> npt.NDArray[np.float64]:
         """
@@ -530,6 +788,46 @@ class BayFAIOpt:
             X_norm_samples = X_norm[idx_samples]
             return X_samples, X_norm_samples
 
+    def _fast_maps(self, gr):
+        """Serve extract_cp's 2theta/chi maps from the cached pixel positions (same cython kernels).
+
+        chiArray is only read at ring-contour pixels, so chi is computed per indexed pixel instead of
+        over the full grid; both skip pyFAI's fromfunction index grids. No-op unless the inputs match.
+        """
+        if not (
+            self.stacked_powder.shape == self.detector.shape
+            and gr._parallax is None
+            and gr.chiDiscAtPi is True
+            and gr.detector is self.detector
+        ):
+            return
+        p1, p2, p3 = self.detector.calc_cartesian_positions()
+        gr.twoThetaArray = lambda shape=None: _geometry.calc_tth(
+            L=gr._dist,
+            rot1=gr._rot1,
+            rot2=gr._rot2,
+            rot3=gr._rot3,
+            pos1=p1 - gr._poni1,
+            pos2=p2 - gr._poni2,
+            pos3=p3,
+        )
+
+        class ChiAt:
+            def __getitem__(_, idx):
+                return _geometry.calc_chi(
+                    L=gr._dist,
+                    rot1=gr._rot1,
+                    rot2=gr._rot2,
+                    rot3=gr._rot3,
+                    pos1=p1[idx] - gr._poni1,
+                    pos2=p2[idx] - gr._poni2,
+                    pos3=None if p3 is None else p3[idx],
+                    orientation=gr.detector.orientation,
+                    chi_discontinuity_at_pi=gr.chiDiscAtPi,
+                )
+
+        gr.chiArray = lambda shape=None: ChiAt()
+
     def extract_data(self, sample, Imin, max_rings, pts_per_deg):
         """
         Extract data points for a given sampled geometry.
@@ -561,14 +859,16 @@ class BayFAIOpt:
             detector=self.detector,
             wavelength=self.calibrant.wavelength,
         )
-        sg = SingleGeometry(
+        sg = _SingleGeometry(
             "Data Extraction Geometry",
             self.stacked_powder,
             calibrant=self.calibrant,
             detector=self.detector,
             geometry=geom_sample,
         )
-        sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
+        self._fast_maps(sg.geometry_refinement)
+        with _fast_extract_cp(max_rings):
+            sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         return sg.geometry_refinement.data
 
     def score(self, sample, Imin, max_rings, pts_per_deg):
@@ -600,14 +900,16 @@ class BayFAIOpt:
             detector=self.detector,
             wavelength=self.calibrant.wavelength,
         )
-        sg = SingleGeometry(
+        sg = _SingleGeometry(
             "Score Geometry",
             self.stacked_powder,
             calibrant=self.calibrant,
             detector=self.detector,
             geometry=geom_sample,
         )
-        sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
+        self._fast_maps(sg.geometry_refinement)
+        with _fast_extract_cp(max_rings):
+            sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         data = sg.geometry_refinement.data
 
         if data is None or len(data) == 0:
@@ -901,7 +1203,8 @@ class BayFAIOpt:
                 y_norm = y - np.mean(y)
 
             # 8. Update the Gaussian Process model
-            gp_model.fit(X_norm_samples, y_norm)
+            if i < n_iterations - 1:  # the final refit is never read
+                gp_model.fit(X_norm_samples, y_norm)
 
         # 9. Gather results
         best_idx = np.argmax(y)
