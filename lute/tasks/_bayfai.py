@@ -661,33 +661,57 @@ class BayFAIOpt:
             if p not in fixed:
                 self.space.append(p)
 
-    def distribute_parallelized(self, center, res):
+    def distribute_parallelized(self, bounds, res, dist_spacing="geometric"):
         """
-        Distribute the parallelized parameter across MPI ranks around
-        the center value and desired resolutions.
+        Split the parallelized parameter's absolute bounds into one window per MPI rank.
+
+        dist with dist_spacing 'geometric': rank r gets [b_r, b_r+1] of
+        b = low*(high/low)**(arange(size+1)/size), searched on a 2-point grid at the
+        window edges. Otherwise ('linear', or any other parallelized parameter):
+        size equal windows of width w = (high-low)/size, grid step w.
+        Sets res[p] to this rank's window width (refinement range +-step*w).
 
         Parameters
         ----------
-        center : dict
-            Center values for each parameter
+        bounds : dict
+            Absolute bounds per parameter, format: {param: (low, high)}
         res : dict
-            Resolution per parameter
+            Resolution per parameter (updated in place for the parallelized one)
+        dist_spacing : str
+            'geometric' or 'linear' split of bounds['dist'] when dist is parallelized
 
         Returns
         -------
         value : float, optional
-            The shifted center for the parallelized parameter assigned to
-            this MPI rank, or None if no parameter is parallelized.
+            Center of this rank's window, or None if no parameter is parallelized.
         """
+        self.param_values = None
+        self.window = None
         if not self.parallelized:
-            self.param_values = None
             return None
         p = self.parallelized
-        half = self.size // 2
-        values = center[p] + (np.arange(self.size) - half) * res[p]
-        values = np.round(values, 6)
-        self.param_values = values
-        return values[self.rank]
+        lo, hi = sorted(bounds[p])
+        n = self.size
+        if p == "dist" and dist_spacing == "geometric":
+            b = lo * (hi / lo) ** (np.arange(n + 1) / n)
+            lo_k, hi_k = b[self.rank], b[self.rank + 1]
+            w = hi_k - lo_k
+            value = (lo_k + hi_k) / 2
+            self.param_values = (b[:-1] + b[1:]) / 2
+            self.window = np.array([lo_k, hi_k])
+        else:
+            # ponytail: rounding to 9 decimals makes w the decimal of the config (e.g. 0.0058), so
+            # the windows reproduce the old center+k*res sweep bit for bit.
+            w = round((hi - lo) / n, 9)
+            self.param_values = np.round(lo + (np.arange(n) + 0.5) * w, 6)
+            value = self.param_values[self.rank]
+            self.window = np.arange(value - w / 2, value + w / 2 + w, w)
+        res[p] = self.window_width = w
+        logger.info(
+            f"tiling rank={self.rank} {p}={value:.6f} lo={self.window[0]:.6f} "
+            f"hi={self.window[-1]:.6f} w={w:.6f}"
+        )
+        return value
 
     def create_search_space(self, value, center, bounds, res):
         """
@@ -696,11 +720,11 @@ class BayFAIOpt:
         Parameters
         ----------
         value : float, optional
-            Shifted center for the parallelized parameter on this MPI rank
+            Window center of the parallelized parameter on this MPI rank
         center : dict
             Center values for each parameter
         bounds : dict
-            Bounds for each parameter, format: {param: (lower, upper)}
+            Absolute bounds for each parameter, format: {param: (low, high)}
         res : dict
             Resolution per parameter
 
@@ -716,9 +740,11 @@ class BayFAIOpt:
         full_params = {}
         search_params = {}
         for p in self.order:
-            if p in self.space:
-                low = center[p] + bounds[p][0]
-                high = center[p] + bounds[p][1]
+            if p == self.parallelized and value is not None:
+                full_params[p] = self.window
+                search_params[p] = full_params[p]
+            elif p in self.space:
+                low, high = bounds[p]
                 if high < low:
                     low, high = high, low
                 step = res[p]
@@ -764,9 +790,17 @@ class BayFAIOpt:
         """
         if prior:
             means = [center[p] for p in self.space]
-            cov = np.diag(
-                [(np.abs((bounds[p][1] - bounds[p][0])) / 5) ** 2 for p in self.space]
-            )
+            # ponytail: builtin round(), not np.round: c+b - (c-b) differs from 2b in the last bit for
+            # most centers (0.28 - 0.26 != 0.02), and the multivariate_normal draws would change.
+            widths = [
+                (
+                    self.window_width
+                    if p == self.parallelized
+                    else round(float(abs(bounds[p][1] - bounds[p][0])), 12)
+                )
+                for p in self.space
+            ]
+            cov = np.diag([(wd / 5) ** 2 for wd in widths])
             X_free = np.random.multivariate_normal(means, cov, n_samples)
             X_free = np.clip(X_free, self.mins, self.maxs)
             X_norm_samples = 2 * (X_free - self.mins) / (self.maxs - self.mins) - 1
@@ -1091,7 +1125,7 @@ class BayFAIOpt:
         center : dict
             Dictionary of center values for each parameter
         bounds : dict
-            Dictionary of bounds for each parameter
+            Dictionary of absolute (low, high) bounds for each parameter
         res : dict
             Dictionary of resolution for each parameter
         n_samples : int
@@ -1233,6 +1267,7 @@ class BayFAIOpt:
         lbda=0.1,
         seed=None,
         n_cand=None,
+        dist_spacing="geometric",
     ):
         """
         Run BayFAI optimization.
@@ -1246,7 +1281,7 @@ class BayFAIOpt:
         center : dict
             Dictionary of center values for each parameter
         bounds : dict
-            Dictionary of bounds for each parameter
+            Dictionary of absolute (low, high) bounds for each parameter
         res : dict
             Dictionary of resolution for each parameter
         n_samples : int
@@ -1269,9 +1304,13 @@ class BayFAIOpt:
             Random seed for reproducibility
         n_cand : optional, int
             Number of random grid candidates scored by UCB per step (None/0 = whole grid)
+        dist_spacing : str
+            'geometric' (default) or 'linear' split of bounds['dist'] across ranks when
+            parallelized == 'dist'
         """
-        # Distribute the parallelized parameter's window across MPI ranks
-        value = self.distribute_parallelized(center, res)
+        # Split the parallelized parameter's absolute bounds into one window per MPI rank
+        res = dict(res)
+        value = self.distribute_parallelized(bounds, res, dist_spacing)
         if self.rank == 0:
             if self.parallelized is not None:
                 logger.info(

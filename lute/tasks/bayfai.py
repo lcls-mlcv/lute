@@ -64,6 +64,7 @@ class BayFAI(Task):
             center=self._task_parameters.center,
             bounds=self._task_parameters.bounds,
             res=self._task_parameters.resolutions,
+            dist_spacing=self._task_parameters.dist_spacing,
             **bayfai_hyperparams,
         )
         if optimizer.rank == 0:
