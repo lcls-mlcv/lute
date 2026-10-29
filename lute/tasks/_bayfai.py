@@ -14,6 +14,7 @@ __all__ = [
 
 __author__ = "Louis Conreux"
 
+# ruff: noqa: E402  (BAYPHASE import timing statements sit between the imports)
 import time as _time
 
 _T_IMPORT0 = _time.time()
@@ -315,7 +316,7 @@ def _proc_start_epoch():
     with open("/proc/self/stat") as f:
         ticks = int(f.read().rsplit(")", 1)[1].split()[19])
     with open("/proc/stat") as f:
-        btime = next(int(l.split()[1]) for l in f if l.startswith("btime"))
+        btime = next(int(ln.split()[1]) for ln in f if ln.startswith("btime"))
     return btime + ticks / os.sysconf("SC_CLK_TCK")
 
 
