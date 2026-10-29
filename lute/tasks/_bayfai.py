@@ -118,12 +118,13 @@ class BayFAIOpt:
             logger.info(f"Getting {self.size} processes for BayFAIOpt task")
 
     @staticmethod
-    def UCB(X, gp_model, visited_idx, beta=1.96):
-        y_pred, y_std = gp_model.predict(X, return_std=True)
-        ucb = y_pred + beta * y_std
-        ucb[visited_idx] = -np.inf
-        next = np.argmax(ucb)
-        return next
+    def UCB(X, gp_model, visited_idx, beta=1.96, n_cand=None):
+        """Return the index into X of the best unvisited UCB point, among n_cand random ones if set."""
+        idx = np.setdiff1d(np.arange(len(X)), visited_idx)
+        if n_cand and len(idx) > n_cand:
+            idx = np.random.choice(idx, n_cand, replace=False)
+        y_pred, y_std = gp_model.predict(X[idx], return_std=True)
+        return idx[np.argmax(y_pred + beta * y_std)]
 
     @staticmethod
     def q_UCB(X, gp_model, q, visited_idx, beta=1.96):
@@ -782,6 +783,7 @@ class BayFAIOpt:
         prior=True,
         step=5,
         seed=None,
+        n_cand=None,
     ):
         """
         Run Bayesian Optimization on this MPI rank's search space.
@@ -882,7 +884,7 @@ class BayFAIOpt:
         # 5. Run the Bayesian Optimization loop
         for i in range(n_iterations):
             # 6. Select the next point to evaluate
-            next = self.UCB(X_norm, gp_model, visited_idx, beta)
+            next = self.UCB(X_norm, gp_model, visited_idx, beta, n_cand)
             next_sample = X[next]
             visited_idx.append(next)
 
@@ -934,6 +936,7 @@ class BayFAIOpt:
         step=5,
         lbda=0.1,
         seed=None,
+        n_cand=None,
     ):
         """
         Run BayFAI optimization.
@@ -968,6 +971,8 @@ class BayFAIOpt:
             Whether to sample initial points around the center or randomly
         seed : optional, int
             Random seed for reproducibility
+        n_cand : optional, int
+            Number of random grid candidates scored by UCB per step (None/0 = whole grid)
         """
         # Distribute the parallelized parameter's window across MPI ranks
         value = self.distribute_parallelized(center, res)
@@ -989,6 +994,7 @@ class BayFAIOpt:
             "step": step,
             "prior": prior,
             "seed": seed,
+            "n_cand": n_cand,
         }
 
         # Run BO on this rank's search space
