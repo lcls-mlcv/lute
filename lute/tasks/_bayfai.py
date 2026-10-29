@@ -33,6 +33,7 @@ from bokeh.models.annotations import Label  # type: ignore
 import h5py  # type: ignore
 import pyFAI  # type: ignore
 from pyFAI.geometry import Geometry  # type: ignore
+from pyFAI.geometry.core import _geometry  # type: ignore
 from pyFAI.goniometer import SingleGeometry  # type: ignore
 from pyFAI.geometryRefinement import GeometryRefinement  # type: ignore
 from pyFAI.calibrant import CALIBRANT_FACTORY  # type: ignore
@@ -592,6 +593,46 @@ class BayFAIOpt:
             X_norm_samples = X_norm[idx_samples]
             return X_samples, X_norm_samples
 
+    def _fast_maps(self, gr):
+        """Serve extract_cp's 2theta/chi maps from the cached pixel positions (same cython kernels).
+
+        chiArray is only read at ring-contour pixels, so chi is computed per indexed pixel instead of
+        over the full grid; both skip pyFAI's fromfunction index grids. No-op unless the inputs match.
+        """
+        if not (
+            self.stacked_powder.shape == self.detector.shape
+            and gr._parallax is None
+            and gr.chiDiscAtPi is True
+            and gr.detector is self.detector
+        ):
+            return
+        p1, p2, p3 = self.detector.calc_cartesian_positions()
+        gr.twoThetaArray = lambda shape=None: _geometry.calc_tth(
+            L=gr._dist,
+            rot1=gr._rot1,
+            rot2=gr._rot2,
+            rot3=gr._rot3,
+            pos1=p1 - gr._poni1,
+            pos2=p2 - gr._poni2,
+            pos3=p3,
+        )
+
+        class ChiAt:
+            def __getitem__(_, idx):
+                return _geometry.calc_chi(
+                    L=gr._dist,
+                    rot1=gr._rot1,
+                    rot2=gr._rot2,
+                    rot3=gr._rot3,
+                    pos1=p1[idx] - gr._poni1,
+                    pos2=p2[idx] - gr._poni2,
+                    pos3=None if p3 is None else p3[idx],
+                    orientation=gr.detector.orientation,
+                    chi_discontinuity_at_pi=gr.chiDiscAtPi,
+                )
+
+        gr.chiArray = lambda shape=None: ChiAt()
+
     def extract_data(self, sample, Imin, max_rings, pts_per_deg):
         """
         Extract data points for a given sampled geometry.
@@ -630,6 +671,7 @@ class BayFAIOpt:
             detector=self.detector,
             geometry=geom_sample,
         )
+        self._fast_maps(sg.geometry_refinement)
         sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         return sg.geometry_refinement.data
 
@@ -669,6 +711,7 @@ class BayFAIOpt:
             detector=self.detector,
             geometry=geom_sample,
         )
+        self._fast_maps(sg.geometry_refinement)
         t0 = time.perf_counter()
         sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         data = sg.geometry_refinement.data
