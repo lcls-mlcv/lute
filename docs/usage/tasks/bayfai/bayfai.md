@@ -91,11 +91,12 @@ BayFAI:
 |---|---|---|
 | `detname` | `""` | Detector name as defined in psana (`jungfrau`, `epix10k2M`, `jungfrau4M`, `Epix10kaQuad0`...). |
 | `calibrant` | `""` | pyFAI calibrant name, e.g. `AgBh`, `LaB6`, `CeO2` ([list of calibrants](https://github.com/silx-kit/pyFAI/tree/main/src/pyFAI/resources/calibration)). |
-| `center` | `dist: 0.1`, others `0.0` | Initial guess geometry. BayFAI searches around it. Distances in m, rotations in rad. |
-| `bounds` | `dist: ±0.01`, `poni1/2: ±0.0025`, `rot1/2/3: ±0.1` | Search range around `center` for each parameter. |
-| `resolutions` | `dist: 0.001`, `poni1/2: 0.0001`, `rot1/2/3: 0.02` | Grid step of the search space for each parameter. |
+| `center` | `dist: 0.1`, others `0.0` | Initial guess geometry: prior mean and starting point of the search, and the value of `fixed` parameters. Distances in m, rotations in rad. |
+| `bounds` | `dist: [0.035, 0.4]`, `poni1/2: [-0.0025, 0.0025]`, `rot1/2/3: [-0.1, 0.1]` | Absolute `[low, high]` search limits for each parameter (not offsets around `center`; a free parameter's `center` must lie inside). With `parallelized: "dist"`, `bounds.dist` is the whole distance range split across ranks. To convert an old relative config use `[center + low, center + high]`. |
+| `resolutions` | `dist: 0.001`, `poni1/2: 0.0001`, `rot1/2/3: 0.02` | Grid step of the search space for each parameter. The parallelized parameter uses its window width instead. |
 | `fixed` | `["rot3"]` | Parameters kept at their `center` value. `rot3` should always be fixed, because the rings don't change under rotation around the beam axis. Also fix `rot1`/`rot2` if the detector is normal to the beam. |
 | `parallelized` | `None` | Geometry parameter to spread across MPI ranks (usually `"dist"`). See [MPI ranks and convergence](#mpi-ranks-and-convergence). Can't also be in `fixed`. |
+| `dist_spacing` | `"geometric"` | With `parallelized: "dist"`, how `bounds.dist` is split across ranks: `"geometric"` (windows finer at short distance) or `"linear"` (equal windows). |
 | `wavelength` | `1e-10` | Wavelength in m. If you change it from the default, it overrides the mean photon energy read from the HDF5 file. |
 | `h5` | `""` | Smalldata HDF5 file. Filled in automatically from `SubmitSMD`. |
 | `out_file` | `""` | Output `.data` file. Defaults to `<work_dir>/geom/<run>-end_<detname>.data`. |
@@ -132,18 +133,20 @@ Overriding defaults will affect significantly convergence and/or compute time.
 | `step` | `5` | Size (in grid steps) of the refinement space around the best BO parameters. |
 | `lbda` | `0.1` | Penalty weight in the final score used to select the winning geometry across ranks. |
 | `seed` | `None` | Random seed, for reproducibility. |
+| `n_cand` | `8192` | Number of random unvisited grid points scored by the UCB acquisition per BO step (`0` or `None` = whole grid). |
+| `gp_restarts` | `10` | `n_restarts_optimizer` of the Gaussian Process kernel fit. |
 
 ## MPI ranks and Convergence
 
 BayFAI runs one BO per MPI rank.
 
-With `parallelized: "dist"`, each rank gets its own fixed distance on a sliding window centred on `center.dist` and spaced by `resolutions.dist`. The rank then optimizes the other parameters at that distance. The best geometry across all ranks wins.
+With `parallelized: "dist"`, `bounds.dist` (default 0.035-0.4 m) is split into one distance window per rank. With `dist_spacing: "geometric"` (default), rank `r` gets `[b_r, b_r+1]` with `b = low*(high/low)**(r/N)` for `N` ranks, so windows are narrower at short distance, where the rings move most per mm; `"linear"` gives `N` equal windows. Each rank searches its window (its edges) and optimizes the other parameters; the final refinement may move the distance by `step` window widths. The best geometry across all ranks wins.
 
 **The more ranks (CPUs) you give BayFAI, the more of the search space it explores, and the better the chance that BO converges to the right geometry. The trade-off is that the job takes longer and waits longer in the queue.** The default of 120 tasks on one node is a good compromise.
 
 ## MEC 4 Quads particularity
 
-At MEC, the detector is made of 4 independent quads (`Epix10kaQuad0` to `Epix10kaQuad3`), and each quad needs its own geometry. The `bayfai_mec` workflow uses a `!param_sweep` with `zip: true` to run one BayFAI per quad, each with its own `detname`, `center` and `fixed`:
+At MEC, the detector is made of 4 independent quads (`Epix10kaQuad0` to `Epix10kaQuad3`), and each quad needs its own geometry. The `bayfai_mec` workflow uses a `!param_sweep` with `zip: true` to run one BayFAI per quad, each with its own `detname`, `center`, `bounds` and `fixed`:
 
 ```yaml
 - !param_sweep
@@ -161,6 +164,12 @@ At MEC, the detector is made of 4 independent quads (`Epix10kaQuad0` to `Epix10k
       - {dist: 0.27, poni1: 0.08, poni2: -0.04, rot1: 0.0, rot2: -0.6, rot3: 0.0}
       - {dist: 0.2, poni1: -0.01, poni2: 0.0, rot1: 1.1, rot2: 0.0, rot3: 0.0}
       - {dist: 0.1, poni1: -0.01, poni2: 0.04, rot1: -0.4, rot2: 0.0, rot3: 0.0}
+    # Absolute [low, high] search limits: center +- 10 mm, 2.5 mm, 0.1 rad.
+    bounds:
+      - {dist: [0.26, 0.28], poni1: [0.0575, 0.0625], poni2: [0.0575, 0.0625], rot1: [-0.1, 0.1], rot2: [-0.7, -0.5], rot3: [-0.1, 0.1]}
+      - {dist: [0.26, 0.28], poni1: [0.0775, 0.0825], poni2: [-0.0425, -0.0375], rot1: [-0.1, 0.1], rot2: [-0.7, -0.5], rot3: [-0.1, 0.1]}
+      - {dist: [0.19, 0.21], poni1: [-0.0125, -0.0075], poni2: [-0.0025, 0.0025], rot1: [1.0, 1.2], rot2: [-0.1, 0.1], rot3: [-0.1, 0.1]}
+      - {dist: [0.09, 0.11], poni1: [-0.0125, -0.0075], poni2: [0.0375, 0.0425], rot1: [-0.5, -0.3], rot2: [-0.1, 0.1], rot3: [-0.1, 0.1]}
     next: []
 ```
 

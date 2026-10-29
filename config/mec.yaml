@@ -193,12 +193,12 @@ BayFAI:
     rot1: 0.0
     rot2: -0.6
     rot3: 0.0
-  bounds:
-    dist: [-0.01, 0.01]
-    poni1: [-0.01, 0.01]
-    poni2: [-0.01, 0.01]
+  bounds:                     # absolute [low, high] limits, not offsets around center
+    dist: [0.26, 0.28]
+    poni1: [0.05, 0.07]
+    poni2: [0.05, 0.07]
     rot1: [-0.1, 0.1]
-    rot2: [-0.1, 0.1]
+    rot2: [-0.7, -0.5]
     rot3: [-0.1, 0.1]
   resolutions:
     dist: 0.001
