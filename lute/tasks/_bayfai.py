@@ -50,6 +50,44 @@ from LCLSGeom.utils.pyfai_utils import pyfai_to_image_poni  # type: ignore
 
 pyFAI.use_opencl = False
 
+
+class _CachedKernelNames:
+    """Cache, per kernel class, the names sklearn recomputes on every theta access.
+
+    Stock leaf kernels run inspect.signature (get_params) and dir() (hyperparameters)
+    on each L-BFGS objective call; only the names are cached, values are always read.
+    """
+
+    def get_params(self, deep=True):
+        cls = type(self)
+        names = cls.__dict__.get("_param_names")
+        if names is None:
+            names = cls._param_names = tuple(super().get_params(deep=False))
+        return {name: getattr(self, name) for name in names}
+
+    @property
+    def hyperparameters(self):
+        cls = type(self)
+        names = cls.__dict__.get("_hp_names")
+        if names is None:
+            names = cls._hp_names = sorted(
+                a for a in dir(cls) if a.startswith("hyperparameter_")
+            )
+        return [getattr(self, a) for a in names]
+
+
+class Matern(_CachedKernelNames, Matern):
+    pass
+
+
+class ConstantKernel(_CachedKernelNames, ConstantKernel):
+    pass
+
+
+class WhiteKernel(_CachedKernelNames, WhiteKernel):
+    pass
+
+
 logger: logging.Logger = get_logger(__name__)
 
 PHOTON_ENERGY_KEYS: tuple = (
