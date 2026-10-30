@@ -28,13 +28,16 @@ DEFAULT_CONFIG = {
             "nodes": 1,
             "ntasks_per_node": 10,
         },
+        # 119 ranks: more seeds per dataset on the same billed node (MEC train core-h -29.5%).
         "BayFAIOptimizer": {
             "nodes": 1,
             "ntasks_per_node": 120,
+            "exclusive": True,
         },
         "BayFAIOptimizer2": {
             "nodes": 1,
             "ntasks_per_node": 120,
+            "exclusive": True,
         },
     },
     "ELSE": {
@@ -46,13 +49,16 @@ DEFAULT_CONFIG = {
             "nodes": 2,
             "ntasks_per_node": 50,
         },
+        # 63 ranks: 119 did not help MFX and doubles memory.
         "BayFAIOptimizer": {
             "nodes": 1,
-            "ntasks_per_node": 120,
+            "ntasks_per_node": 64,
+            "exclusive": True,
         },
         "BayFAIOptimizer2": {
             "nodes": 1,
-            "ntasks_per_node": 120,
+            "ntasks_per_node": 64,
+            "exclusive": True,
         },
     }
 }
@@ -380,6 +386,9 @@ def update_dag_params(
                     f"--nodes={cfg['nodes']} "
                     f"--constraint={SLURM_CONSTRAINT}"
                 )
+                # A node shared with other jobs slows every rank.
+                if cfg.get("exclusive"):
+                    params += " --exclusive"
             else:
                 params = (
                     f"--account={account} --partition={partition} --constraint={SLURM_CONSTRAINT} {extra_slurm_params}"
@@ -540,6 +549,7 @@ def main() -> None:
     inplace_sed(config_path, sed_pattern)
 
     database_setup(f"{lute_output_dir}/lute.db")  # Setup permissions on database
+
 
     # Check for partition and account. If not provided, prompt the user to use defaults.
     partition: str = "milano"
