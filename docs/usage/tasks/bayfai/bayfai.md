@@ -34,7 +34,7 @@ The `bayfai` workflow runs two managed `Task`s:
 - `-D <folder>`: put everything in `/sdf/data/lcls/ds/<hutch>/<experiment>/results/<folder>/` (optional but recommended).
 - `-W bayfai`: copy the `bayfai` workflow definition. **At MEC use `-W bayfai_mec`** (see [MEC 4 quads particularity](#mec-4-quads-particularity)).
 
-The script will ask for partition, account, nodes and ntasks. Press Enter to accept the defaults. The resources used by each `Task` are then set per hutch: `BayFAIOptimizer` runs on 1 node with 120 tasks.
+The script will ask for partition, account, nodes and ntasks. Press Enter to accept the defaults. The resources used by each `Task` are then set per hutch: `BayFAIOptimizer` runs on one whole node (`--exclusive`) with 120 tasks at MEC and 64 elsewhere. If a bytecode cache directory exists (`$LUTE_BAYFAI_PYCACHE`, else `lute_output/.pycache`), BayFAI ranks use it to skip recompiling Python modules at startup.
 
 After setup you will find, in `results/<folder>/lute_output/`:
 
@@ -142,7 +142,7 @@ BayFAI runs one BO per MPI rank.
 
 With `parallelized: "dist"`, `bounds.dist` (default 0.035-0.4 m) is split into one distance window per rank. With `dist_spacing: "geometric"` (default), rank `r` gets `[b_r, b_r+1]` with `b = low*(high/low)**(r/N)` for `N` ranks, so windows are narrower at short distance, where the rings move most per mm; `"linear"` gives `N` equal windows. Each rank searches its window (its edges) and optimizes the other parameters; the final refinement may move the distance by `step` window widths. The best geometry across all ranks wins.
 
-**The more ranks (CPUs) you give BayFAI, the more of the search space it explores, and the better the chance that BO converges to the right geometry. The trade-off is that the job takes longer and waits longer in the queue.** The default of 120 tasks on one node is a good compromise.
+**The more ranks (CPUs) you give BayFAI, the more of the search space it explores, and the better the chance that BO converges to the right geometry. The trade-off is that the job takes longer and waits longer in the queue.** The defaults (120 tasks at MEC, 64 elsewhere, one whole node) are a good compromise: at MEC, 119 ranks give more seeds per quad on the same billed node; at other hutches, 119 ranks did not help and double the memory.
 
 ## MEC 4 Quads particularity
 
