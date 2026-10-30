@@ -307,3 +307,44 @@ BayFAIOptimizer2.update_environment(
         "PS_PARALLEL": "mpi",
     }
 )
+
+# BayFAI bytecode cache
+#######
+from typing import Callable, Optional
+
+import yaml
+
+from lute.io.config import RunGroupsPolicyLoader
+
+
+def _bayfai_env(executor: MPIExecutor) -> Callable[[], Dict[str, str]]:
+    """Return executor's environment, plus its bytecode cache, evaluated at run time.
+
+    The cache is $LUTE_BAYFAI_PYCACHE, else <work_dir>/.pycache (filled by
+    setup_lute.py). Without either, the environment is the dict given above.
+    """
+    env: Dict[str, str] = executor._delayed_update_env_args[0]
+
+    def run_env() -> Dict[str, str]:
+        task_env: Dict[str, str] = executor._analysis_desc.task_env
+        new_env: Dict[str, str] = dict(env)
+        # Same PYTHONPATH prepend update_environment applies to a dict.
+        if "PYTHONPATH" in task_env:
+            new_env["PYTHONPATH"] = f"{env['PYTHONPATH']}:{task_env['PYTHONPATH']}"
+        pycache: Optional[str] = os.getenv("LUTE_BAYFAI_PYCACHE")
+        config_path: Optional[str] = task_env.get("LUTE_CONFIGPATH")
+        if pycache is None and config_path:
+            with open(config_path) as f:
+                header = next(yaml.load_all(f, Loader=RunGroupsPolicyLoader))
+            if header.get("work_dir"):
+                pycache = os.path.join(header["work_dir"], ".pycache")
+        # The psana envs ship no -O bytecode; 63 ranks recompiling them took 100-230 s.
+        if pycache and os.path.isdir(pycache):
+            new_env["PYTHONPYCACHEPREFIX"] = pycache
+        return new_env
+
+    return run_env
+
+
+BayFAIOptimizer.update_environment(_bayfai_env(BayFAIOptimizer))
+BayFAIOptimizer2.update_environment(_bayfai_env(BayFAIOptimizer2))

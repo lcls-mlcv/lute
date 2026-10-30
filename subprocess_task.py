@@ -192,7 +192,9 @@ def main() -> None:
         if __debug__:
             os.execlp("python", "python", "-B", "-c", exec_script)
         else:
-            os.execlp("python", "python", "-OB", "-c", exec_script)
+            # Without a bytecode cache, -B keeps __pycache__ out of the LUTE install.
+            opt: str = "-O" if os.getenv("PYTHONPYCACHEPREFIX") else "-OB"
+            os.execlp("python", "python", opt, "-c", exec_script)
 
 
 if __name__ == "__main__":

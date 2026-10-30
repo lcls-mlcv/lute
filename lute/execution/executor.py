@@ -1790,6 +1790,18 @@ class MPIExecutor(Executor):
             py_cmd = (
                 f"{self._py_executable} -OB -u -m mpi4py.run {executable_path} {params}"
             )
+            # shell_source stores the Task env only as LUTE_TENV_, which this first
+            # interpreter never reads. Keep -B without a cache: it would write
+            # __pycache__ into the LUTE install.
+            pycache: Optional[str] = self._analysis_desc.task_env.get(
+                "LUTE_TENV_PYTHONPYCACHEPREFIX",
+                self._analysis_desc.task_env.get("PYTHONPYCACHEPREFIX"),
+            )
+            if pycache:
+                py_cmd = (
+                    f"env PYTHONPYCACHEPREFIX={pycache} {self._py_executable} -O -u "
+                    f"-m mpi4py.run {executable_path} {params}"
+                )
 
         cmd: str = f"{mpi_cmd} {py_cmd}"
         return cmd
