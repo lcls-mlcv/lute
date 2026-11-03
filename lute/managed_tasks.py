@@ -289,9 +289,12 @@ BayFAIOptimizer.update_environment(
         "NUMEXPR_NUM_THREADS": "16",
         # One rank per core: unset, each rank's pyFAI OpenMP pool spins on every core of the node.
         "OMP_NUM_THREADS": "1",
+        # pyFAI's OpenMP sizes its team from the CPU affinity, ignoring OMP_NUM_THREADS.
+        "OMP_THREAD_LIMIT": "1",
         "PYTHONPATH": "/sdf/group/lcls/ds/tools/LCLSGeom/src",
     }
 )
+BayFAIOptimizer.mpi_bind = "--map-by numa --bind-to core:if-supported"
 
 BayFAIOptimizer2: MPIExecutor = MPIExecutor("BayFAI")
 """Optimize LCLS-II detector geometry using BayFAI: PyFAI coupled with Bayesian Optimization."""
@@ -301,9 +304,12 @@ BayFAIOptimizer2.update_environment(
         "NUMEXPR_MAX_THREADS": "16",
         "NUMEXPR_NUM_THREADS": "16",
         "OMP_NUM_THREADS": "1",
+        # pyFAI's OpenMP sizes its team from the CPU affinity, ignoring OMP_NUM_THREADS.
+        "OMP_THREAD_LIMIT": "1",
         "PS_SRV_NODES": "0",
         "PS_EB_NODES": "1",
         "PYTHONPATH": "/sdf/group/lcls/ds/tools/LCLSGeom/src",
         "PS_PARALLEL": "mpi",
     }
 )
+BayFAIOptimizer2.mpi_bind = "--map-by numa --bind-to core:if-supported"
