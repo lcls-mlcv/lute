@@ -1348,6 +1348,13 @@ class BayFAIOpt:
             **bayfai_hyperparams,
         )
 
+        if self.rank == 0:
+            # Rank 0 mostly waits at the Barrier for slower ranks: hide its plotting imports there.
+            # They leave numpy's global RNG state untouched, so later pyFAI draws are unchanged.
+            import matplotlib.pyplot  # type: ignore # noqa: F401
+            import bokeh.plotting  # type: ignore # noqa: F401
+            import panel  # type: ignore # noqa: F401
+
         # Gather BayFAI results from all ranks
         self.comm.Barrier()
         self.scan = {}
