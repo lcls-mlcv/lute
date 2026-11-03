@@ -1382,6 +1382,8 @@ class BayFAIOpt:
                 detector=self.detector,
                 wavelength=self.calibrant.wavelength,
             )
+            # One integrator for all rank-0 plots: its 2theta/q arrays and integration engines are cached.
+            self.ai = _build_ai(self.detector, self.params, self.calibrant.wavelength)
 
     def plot_radial_integration(self, result1d, calibrant, ax=None):
         """
@@ -1660,7 +1662,7 @@ class BayFAIOpt:
         )
 
         # Ring overlay
-        ai = _build_ai(self.detector, self.params, self.calibrant.wavelength)
+        ai = self.ai
         tth = np.array(self.calibrant.get_2th())
         ttha = ai.twoThetaArray().reshape(self.detector.calib_shape)
         p1_3d = p1.reshape(self.detector.calib_shape)
@@ -1782,7 +1784,7 @@ class BayFAIOpt:
             color_mapper=color_mapper,
         )
 
-        ai = _build_ai(self.detector, self.params, self.calibrant.wavelength)
+        ai = self.ai
         tth = np.array(self.calibrant.get_2th())
         ttha = ai.twoThetaArray().reshape(self.detector.calib_shape)
         for i in range(self.detector.n_modules):
@@ -1973,7 +1975,7 @@ class BayFAIOpt:
         self.plot_intensity_hist(self.powder, self.Imin, ax2)
 
         # Compute 1D azimuthal integration via pyFAI
-        ai = _build_ai(self.detector, self.params, self.calibrant.wavelength)
+        ai = self.ai
         result1d = ai.integrate1d(self.stacked_powder, npt=256, unit="q_A^-1")
 
         # (1,0) 1D integration, spanning two cols
@@ -2091,7 +2093,7 @@ class BayFAIOpt:
         ax1.axis("off")
 
         # Compute azimuthal integrations via pyFAI
-        ai = _build_ai(self.detector, self.params, self.calibrant.wavelength)
+        ai = self.ai
         q_max = float(
             (ai.qArray().reshape(self.detector.calib_shape) / 10).max()
         )  # nm⁻¹ → Å⁻¹, detector-limited q maximum
