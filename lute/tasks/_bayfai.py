@@ -333,6 +333,8 @@ class BayFAIOpt:
         Run number
     """
 
+    min_points = 0  # score() returns 0 below this many control points
+
     def __init__(
         self,
         exp: str,
@@ -939,7 +941,8 @@ class BayFAIOpt:
             sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         data = sg.geometry_refinement.data
 
-        if data is None or len(data) == 0:
+        # A handful of points can fit any geometry, so too few points is a failed geometry.
+        if data is None or len(data) == 0 or len(data) < self.min_points:
             return 0.0
 
         ix = data[:, 0]
@@ -1064,7 +1067,7 @@ class BayFAIOpt:
         """
         dist, poni1, poni2, rot1, rot2, rot3 = sample
 
-        if data is None or len(data) == 0:
+        if data is None or len(data) == 0 or len(data) < self.min_points:
             return 0.0, [np.inf] * 5, 0.0, sample
 
         gr = GeometryRefinement(
@@ -1272,6 +1275,7 @@ class BayFAIOpt:
         n_cand=None,
         dist_spacing="geometric",
         gp_restarts=10,
+        min_points=None,
     ):
         """
         Run BayFAI optimization.
@@ -1313,7 +1317,14 @@ class BayFAIOpt:
             parallelized == 'dist'
         gp_restarts : int
             n_restarts_optimizer of the GP kernel-hyperparameter fit
+        min_points : int, optional
+            Geometries with fewer extracted control points score 0 (0 = off; None = 100
+            when parallelized == 'dist', else 0)
         """
+        # Distance sweeps reach geometries where a few stray points fit; MEC boxes do not.
+        if min_points is None:
+            min_points = 100 if self.parallelized == "dist" else 0
+        self.min_points = min_points
         # Split the parallelized parameter's absolute bounds into one window per MPI rank
         res = dict(res)
         value = self.distribute_parallelized(bounds, res, dist_spacing)

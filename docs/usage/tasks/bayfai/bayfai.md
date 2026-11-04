@@ -135,6 +135,7 @@ Overriding defaults will affect significantly convergence and/or compute time.
 | `seed` | `None` | Random seed, for reproducibility. |
 | `n_cand` | `8192` | Number of random unvisited grid points scored by the UCB acquisition per BO step (`0` or `None` = whole grid). |
 | `gp_restarts` | `10` | `n_restarts_optimizer` of the Gaussian Process kernel fit. |
+| `min_points` | `None` | Geometries with fewer extracted control points score 0, so a few stray points cannot win a distance sweep. `None` = 100 when `parallelized: dist`, else 0 (off). |
 
 ## MPI ranks and Convergence
 

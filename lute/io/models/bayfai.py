@@ -108,6 +108,12 @@ class BayFAIParameters(TaskParameters):
             description="n_restarts_optimizer of the GP kernel-hyperparameter fit (sklearn GaussianProcessRegressor).",
         )
 
+        min_points: Optional[int] = Field(
+            default=None,
+            description="Geometries with fewer extracted control points score 0 (0 = off; "
+            "None = 100 when parallelized is 'dist', else 0).",
+        )
+
     parallelized: Optional[str] = Field(
         None,
         description="Name of the geometry parameter to distribute across MPI ranks as a "
