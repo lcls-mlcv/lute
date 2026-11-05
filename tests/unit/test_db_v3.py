@@ -1,11 +1,16 @@
+import multiprocessing
 import os
+import shutil
 import sqlite3
 import subprocess
 import sys
 
 import pytest
 
+import lute.io._db.v3._versioning as versioning
+from lute.io._db.common_sqlite import DatabaseError, get_user_version
 from lute.io._db.v3._sqlite import create_tables
+from lute.io._db.v3._versioning import open_db
 from lute.io.db import import_function
 
 from test_db_v2 import BASELINE_LATEST
@@ -66,3 +71,166 @@ def test_env_var_selects_v3():
         check=True,
     ).stdout.split()
     assert out[-2:] == ["3", "lute.io._db.v3.api"]
+
+
+# Versioning and migrations (step 2)
+
+
+def _user_version(db_path):
+    con = sqlite3.connect(db_path)
+    try:
+        return get_user_version(con)
+    finally:
+        con.close()
+
+
+def _tables(db_path):
+    con = sqlite3.connect(db_path)
+    try:
+        res = con.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        return {r[0] for r in res.fetchall()}
+    finally:
+        con.close()
+
+
+def test_open_db_new_file_is_latest(tmp_path):
+    db_path = str(tmp_path / "lute.db")
+    con = open_db(db_path)
+    n_triggers = con.execute(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'"
+    ).fetchone()[0]
+    n_base_schema = con.execute("SELECT COUNT(*) FROM base_schema").fetchone()[0]
+    con.close()
+
+    assert _user_version(db_path) == versioning.latest_user_version() == 300
+    assert {"executions", "config", "parameters", "results"} <= _tables(db_path)
+    assert n_triggers == 6
+    assert n_base_schema == 2
+
+
+def test_open_db_twice_is_noop(tmp_path):
+    db_path = str(tmp_path / "lute.db")
+    open_db(db_path).close()
+    open_db(db_path).close()
+    assert _user_version(db_path) == 300
+    assert not os.path.exists(f"{db_path}.bak-v300")
+
+
+def test_fixture_written_with_v3_is_latest(v3_db_dir):
+    assert _user_version(os.path.join(v3_db_dir, "lute.db")) == 300
+
+
+def test_migration_applies_with_backup(tmp_path, v3_db_dir, monkeypatch):
+    db_path = str(tmp_path / "lute.db")
+    shutil.copy(os.path.join(v3_db_dir, "lute.db"), db_path)
+
+    def add_table(con):
+        con.execute("CREATE TABLE new_table (id INTEGER PRIMARY KEY)")
+
+    monkeypatch.setattr(
+        versioning, "MIGRATIONS", versioning.MIGRATIONS + [(300, 301, add_table)]
+    )
+    open_db(db_path).close()
+
+    assert _user_version(db_path) == 301
+    assert "new_table" in _tables(db_path)
+    backup = f"{db_path}.bak-v300"
+    assert _user_version(backup) == 300
+    assert "new_table" not in _tables(backup)
+
+
+def test_failed_migration_leaves_file_intact(tmp_path, v3_db_dir, monkeypatch):
+    db_path = str(tmp_path / "lute.db")
+    shutil.copy(os.path.join(v3_db_dir, "lute.db"), db_path)
+
+    def broken(con):
+        con.execute("CREATE TABLE half_done (id INTEGER PRIMARY KEY)")
+        con.execute("UPDATE results SET valid_flag = 0")
+        raise RuntimeError("migration failed")
+
+    monkeypatch.setattr(
+        versioning, "MIGRATIONS", versioning.MIGRATIONS + [(300, 301, broken)]
+    )
+    with pytest.raises(RuntimeError):
+        open_db(db_path)
+
+    assert _user_version(db_path) == 300
+    assert "half_done" not in _tables(db_path)
+    con = sqlite3.connect(db_path)
+    n_valid = con.execute("SELECT SUM(valid_flag) FROM results").fetchone()[0]
+    con.close()
+    assert n_valid == 4  # 5 executions, 1 failed
+
+
+def test_missing_migration_raises(tmp_path, monkeypatch):
+    db_path = str(tmp_path / "lute.db")
+    open_db(db_path).close()
+    monkeypatch.setattr(
+        versioning,
+        "MIGRATIONS",
+        versioning.MIGRATIONS + [(301, 302, lambda con: None)],
+    )
+    with pytest.raises(DatabaseError, match="No migration"):
+        open_db(db_path)
+    assert _user_version(db_path) == 300
+
+
+def _open_after_barrier(db_path, barrier, results):
+    barrier.wait()
+    try:
+        open_db(db_path).close()
+        results.put("ok")
+    except Exception as err:  # Report to the parent instead of dying silently
+        results.put(repr(err))
+
+
+def test_concurrent_openers_migrate_once(tmp_path):
+    db_path = str(tmp_path / "lute.db")
+    n_procs = 6
+    ctx = multiprocessing.get_context("fork")
+    barrier = ctx.Barrier(n_procs)
+    results = ctx.Queue()
+    procs = [
+        ctx.Process(target=_open_after_barrier, args=(db_path, barrier, results))
+        for _ in range(n_procs)
+    ]
+    for proc in procs:
+        proc.start()
+    for proc in procs:
+        proc.join(timeout=120)
+
+    assert [results.get(timeout=5) for _ in procs] == ["ok"] * n_procs
+    assert _user_version(db_path) == 300
+    con = sqlite3.connect(db_path)
+    assert con.execute("SELECT COUNT(*) FROM base_schema").fetchone()[0] == 2
+    con.close()
+
+
+def test_v3_refuses_v2_file(v2_db_dir):
+    db_path = os.path.join(v2_db_dir, "lute.db")
+    with pytest.raises(DatabaseError, match="LUTE_DB_SPEC_VERSION=2"):
+        open_db(db_path)
+    assert _user_version(db_path) == 0
+
+
+def test_v3_api_refuses_v2_file(v2_db_dir):
+    from lute.io._db.v3.api import read_latest_db_entry
+
+    with pytest.raises(DatabaseError):
+        read_latest_db_entry(v2_db_dir, "TestWriteOutput", "outfile_name")
+
+
+def test_v3_refuses_newer_file(tmp_path):
+    db_path = str(tmp_path / "lute.db")
+    con = sqlite3.connect(db_path)
+    con.execute("PRAGMA user_version = 999")
+    con.close()
+    with pytest.raises(DatabaseError, match="newer"):
+        open_db(db_path)
+
+
+def test_v2_refuses_v3_file(v3_db_dir):
+    from lute.io._db.v2.api import read_latest_db_entry
+
+    with pytest.raises(DatabaseError, match="LUTE_DB_SPEC_VERSION=3"):
+        read_latest_db_entry(v3_db_dir, "TestWriteOutput", "outfile_name")

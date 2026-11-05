@@ -15,7 +15,11 @@ import logging
 import sqlite3
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, overload
 
-from lute.io._db.common_sqlite import does_table_exist, DatabaseError
+from lute.io._db.common_sqlite import (
+    does_table_exist,
+    execute_in_transaction,
+    DatabaseError,
+)
 
 if TYPE_CHECKING:
     from lute.io.models.base import AnalysisHeader, TaskParameters
@@ -78,9 +82,7 @@ def _create_executions_table(con: sqlite3.Connection) -> None:
         FOREIGN KEY (result_id) REFERENCES results(id)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_config_table(con: sqlite3.Connection) -> None:
@@ -109,9 +111,7 @@ def _create_config_table(con: sqlite3.Connection) -> None:
         UNIQUE(title, experiment, run, date, lute_version, task_timeout)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_tasks_table(con: sqlite3.Connection) -> None:
@@ -131,9 +131,7 @@ def _create_tasks_table(con: sqlite3.Connection) -> None:
         name TEXT UNIQUE
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_parameters_table(con: sqlite3.Connection) -> None:
@@ -162,9 +160,7 @@ def _create_parameters_table(con: sqlite3.Connection) -> None:
         FOREIGN KEY (meta_id) REFERENCES param_meta (id)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_parameter_types_table(con: sqlite3.Connection) -> None:
@@ -195,9 +191,7 @@ def _create_parameter_types_table(con: sqlite3.Connection) -> None:
         definition TEXT NOT NULL UNIQUE
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_param_meta_table(con: sqlite3.Connection) -> None:
@@ -229,9 +223,7 @@ def _create_param_meta_table(con: sqlite3.Connection) -> None:
         UNIQUE(rename_param, description, flag_type, is_result)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_executors_table(con: sqlite3.Connection) -> None:
@@ -259,9 +251,7 @@ def _create_executors_table(con: sqlite3.Connection) -> None:
         UNIQUE(name, poll_interval, comm)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_communicators_table(con: sqlite3.Connection) -> None:
@@ -292,9 +282,7 @@ def _create_communicators_table(con: sqlite3.Connection) -> None:
         UNIQUE(name, description)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_environment_table(con: sqlite3.Connection) -> None:
@@ -321,9 +309,7 @@ def _create_environment_table(con: sqlite3.Connection) -> None:
         FOREIGN KEY (execution_id) REFERENCES executions (id)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_results_table(con: sqlite3.Connection) -> None:
@@ -351,9 +337,7 @@ def _create_results_table(con: sqlite3.Connection) -> None:
         UNIQUE(schema_id, payload, summary, status, valid_flag)
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_schema_table(con: sqlite3.Connection) -> None:
@@ -378,9 +362,7 @@ def _create_schema_table(con: sqlite3.Connection) -> None:
         schema INTEGER UNIQUE
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_base_schema_table(con: sqlite3.Connection) -> None:
@@ -414,12 +396,9 @@ def _create_base_schema_table(con: sqlite3.Connection) -> None:
     # In addition to creation, we will add base_schema that we already know about
     insert_query: str = "INSERT OR IGNORE INTO base_schema (id, name) VALUES (?, ?)"
 
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(create_query)
-
-        for bs in BaseSchema:
-            con.execute(insert_query, (bs.value, bs.name))
+    con.execute(create_query)
+    for bs in BaseSchema:
+        con.execute(insert_query, (bs.value, bs.name))
 
 
 def _create_task_version_table(con: sqlite3.Connection) -> None:
@@ -445,9 +424,7 @@ def _create_task_version_table(con: sqlite3.Connection) -> None:
         version_info TEXT NOT NULL UNIQUE
     );
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(query)
+    con.execute(query)
 
 
 def _create_version_specifiers_table(con: sqlite3.Connection) -> None:
@@ -485,12 +462,9 @@ def _create_version_specifiers_table(con: sqlite3.Connection) -> None:
         "INSERT OR IGNORE INTO version_specifiers (id, name) VALUES (?, ?)"
     )
 
-    with con:
-        con.executescript(PRAGMAS)
-        con.execute(create_query)
-
-        for vs in VersionSpecifier:
-            con.execute(insert_query, (vs.value, vs.name))
+    con.execute(create_query)
+    for vs in VersionSpecifier:
+        con.execute(insert_query, (vs.value, vs.name))
 
 
 def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
@@ -571,15 +545,17 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
         END;
     END;
     """
-    with con:
-        con.executescript(PRAGMAS)
-        con.executescript(query)
+    execute_in_transaction(con, query)
 
 
 def create_tables(con: sqlite3.Connection) -> None:
     """Setup the full database.
 
     See individual table function calls for more information
+
+    This function does not commit. It is run as a migration by `open_db`, which
+    owns the transaction, so none of the table creation functions may use
+    `with con:` or `con.executescript` (both commit).
 
     Args:
         con (sqlite3.Connection): A connection to the database.

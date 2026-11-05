@@ -41,6 +41,25 @@ else:
 logger: logging.Logger = get_logger(__name__, is_task=False)
 
 
+def _connect(db_path: str) -> "sqlite3.Connection":
+    """Open the database, refusing a file written by the v3 specification."""
+    import sqlite3
+    from lute.io._db.common_sqlite import (
+        DatabaseError,
+        V3_BASE_USER_VERSION,
+        get_user_version,
+    )
+
+    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    if get_user_version(con) >= V3_BASE_USER_VERSION:
+        con.close()
+        raise DatabaseError(
+            f"{db_path} was written with database specification v3 and cannot "
+            "be used with v2. Set LUTE_DB_SPEC_VERSION=3, or move it aside."
+        )
+    return con
+
+
 def record_analysis_db(cfg: DescribedAnalysis) -> None:
     """Write an DescribedAnalysis object to the database.
 
@@ -80,7 +99,7 @@ def record_analysis_db(cfg: DescribedAnalysis) -> None:
     del cfg.task_parameters.lute_config.work_dir
 
     db_path: str = f"{work_dir}/lute.db"
-    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    con: sqlite3.Connection = _connect(db_path)
     create_tables(con=con)
     with con:
         try:
@@ -131,7 +150,7 @@ def record_parameters_db(params: TaskParameters) -> Optional[RowIds]:
     del params.lute_config.work_dir
 
     db_path: str = f"{work_dir}/lute.db"
-    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    con: sqlite3.Connection = _connect(db_path)
     create_tables(con=con)
     with con:
         try:
@@ -158,7 +177,7 @@ def update_analysis_db(cfg: DescribedAnalysis, row_ids: RowIds) -> None:
     db_dir: str = cfg.task_parameters.lute_config.work_dir
     del cfg.task_parameters.lute_config.work_dir
     db_path: str = f"{db_dir}/lute.db"
-    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    con: sqlite3.Connection = _connect(db_path)
     with con:
         try:
             update_execution(con=con, cfg=cfg, row_ids=row_ids)
@@ -203,7 +222,7 @@ def read_latest_db_entry(
     from ._sqlite import select_param_from_db
 
     db_path: str = f"{db_dir}/lute.db"
-    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    con: sqlite3.Connection = _connect(db_path)
     with con:
         try:
             cond: Dict[str, str] = {}
@@ -257,7 +276,7 @@ def get_executions_summary(
     from ._sqlite import executions_summary
 
     db_path: str = f"{db_dir}/lute.db"
-    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    con: sqlite3.Connection = _connect(db_path)
     with con:
         return executions_summary(con=con)
 
@@ -288,7 +307,7 @@ def get_task_parameters_summary(
     from ._sqlite import task_parameters_summary
 
     db_path: str = f"{db_dir}/lute.db"
-    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    con: sqlite3.Connection = _connect(db_path)
     with con:
         return task_parameters_summary(con=con, task_name=task_name)
 
@@ -314,7 +333,7 @@ def get_task_parameters_defn_and_params(
     from ._sqlite import get_task_parameters_definition_and_params
 
     db_path: str = f"{db_dir}/lute.db"
-    con: sqlite3.Connection = sqlite3.Connection(db_path)
+    con: sqlite3.Connection = _connect(db_path)
     with con:
         rows: List[Tuple[str, str, str]] = get_task_parameters_definition_and_params(
             con=con, row_ids=row_ids
