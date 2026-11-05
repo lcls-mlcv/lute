@@ -93,3 +93,11 @@ def v2_db_dir(tmp_path_factory) -> str:
     import lute.io._db.v2.api as v2_api
 
     return make_lute_db(str(tmp_path_factory.mktemp("v2_db")), v2_api)
+
+
+@pytest.fixture(scope="session")
+def v3_db_dir(tmp_path_factory) -> str:
+    """Directory holding the fixture `lute.db` written with DB v3."""
+    import lute.io._db.v3.api as v3_api
+
+    return make_lute_db(str(tmp_path_factory.mktemp("v3_db")), v3_api)
