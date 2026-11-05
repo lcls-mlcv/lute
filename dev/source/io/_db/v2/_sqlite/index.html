@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.57a0d79d.min.css">
       
       
 
@@ -6407,9 +6407,9 @@ inserted, or pre-existing.</p>
 <span class="sd">        con (sqlite3.Connection): A connection to the database.</span>
 <span class="sd">    """</span>
     <span class="n">query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"""</span>
-<span class="s2">    CREATE UNIQUE INDEX environment_index_0 ON environment (execution_id, name);</span>
+<span class="s2">    CREATE UNIQUE INDEX IF NOT EXISTS environment_index_0 ON environment (execution_id, name);</span>
 
-<span class="s2">    CREATE TRIGGER check_schema_update</span>
+<span class="s2">    CREATE TRIGGER IF NOT EXISTS check_schema_update</span>
 <span class="s2">    BEFORE UPDATE ON schema</span>
 <span class="s2">    BEGIN</span>
 <span class="s2">        SELECT</span>
@@ -6419,7 +6419,7 @@ inserted, or pre-existing.</p>
 <span class="s2">        END;</span>
 <span class="s2">    END;</span>
 
-<span class="s2">    CREATE TRIGGER check_schema_insert</span>
+<span class="s2">    CREATE TRIGGER IF NOT EXISTS check_schema_insert</span>
 <span class="s2">    BEFORE INSERT ON schema</span>
 <span class="s2">    BEGIN</span>
 <span class="s2">        SELECT</span>
@@ -6429,7 +6429,7 @@ inserted, or pre-existing.</p>
 <span class="s2">        END;</span>
 <span class="s2">    END;</span>
 
-<span class="s2">    CREATE TRIGGER check_version_update</span>
+<span class="s2">    CREATE TRIGGER IF NOT EXISTS check_version_update</span>
 <span class="s2">    BEFORE UPDATE ON task_version</span>
 <span class="s2">    BEGIN</span>
 <span class="s2">        SELECT</span>
@@ -6439,7 +6439,7 @@ inserted, or pre-existing.</p>
 <span class="s2">        END;</span>
 <span class="s2">    END;</span>
 
-<span class="s2">    CREATE TRIGGER check_version_insert</span>
+<span class="s2">    CREATE TRIGGER IF NOT EXISTS check_version_insert</span>
 <span class="s2">    BEFORE INSERT ON task_version</span>
 <span class="s2">    BEGIN</span>
 <span class="s2">        SELECT</span>
@@ -6449,7 +6449,7 @@ inserted, or pre-existing.</p>
 <span class="s2">        END;</span>
 <span class="s2">    END;</span>
 
-<span class="s2">    CREATE TRIGGER check_executors_update</span>
+<span class="s2">    CREATE TRIGGER IF NOT EXISTS check_executors_update</span>
 <span class="s2">    BEFORE UPDATE ON executors</span>
 <span class="s2">    BEGIN</span>
 <span class="s2">        SELECT</span>
@@ -6459,7 +6459,7 @@ inserted, or pre-existing.</p>
 <span class="s2">        END;</span>
 <span class="s2">    END;</span>
 
-<span class="s2">    CREATE TRIGGER check_executors_insert</span>
+<span class="s2">    CREATE TRIGGER IF NOT EXISTS check_executors_insert</span>
 <span class="s2">    BEFORE INSERT ON executors</span>
 <span class="s2">    BEGIN</span>
 <span class="s2">        SELECT</span>
@@ -8511,10 +8511,10 @@ Task.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../../../..", "features": [], "search": "../../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../../..", "features": [], "search": "../../../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
