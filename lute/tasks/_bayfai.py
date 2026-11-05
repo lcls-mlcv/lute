@@ -75,15 +75,15 @@ class _CachedKernelNames:
         return [getattr(self, a) for a in names]
 
 
-class Matern(_CachedKernelNames, Matern):
+class _Matern(_CachedKernelNames, Matern):
     pass
 
 
-class ConstantKernel(_CachedKernelNames, ConstantKernel):
+class _ConstantKernel(_CachedKernelNames, ConstantKernel):
     pass
 
 
-class WhiteKernel(_CachedKernelNames, WhiteKernel):
+class _WhiteKernel(_CachedKernelNames, WhiteKernel):
     pass
 
 
@@ -1203,11 +1203,11 @@ class BayFAIOpt:
             y_norm = y - np.mean(y)
 
         # 4. Initialize the Gaussian Process model
-        kernel = Matern(
+        kernel = _Matern(
             length_scale=0.3, length_scale_bounds=(0.2, 0.4), nu=2.5
-        ) * ConstantKernel(
+        ) * _ConstantKernel(
             constant_value=1.0, constant_value_bounds=(0.5, 1.5)
-        ) + WhiteKernel(
+        ) + _WhiteKernel(
             noise_level=0.001, noise_level_bounds="fixed"
         )
         gp_model = GaussianProcessRegressor(

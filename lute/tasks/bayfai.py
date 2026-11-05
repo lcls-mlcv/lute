@@ -14,8 +14,6 @@ import logging
 import time
 from typing import Union
 
-import panel as pn  # type: ignore
-
 from lute.tasks._bayfai import BayFAIOpt
 from lute.io.models.bayfai import BayFAIParameters
 
@@ -23,10 +21,7 @@ from lute.tasks.task import Task
 from lute.tasks.dataclasses import TaskStatus, ElogSummaryPlots
 from lute.execution.logging import get_logger
 
-import os
 import logging
-import time  # type: ignore
-
 logger: logging.Logger = get_logger(__name__)
 
 
