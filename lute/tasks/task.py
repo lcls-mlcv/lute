@@ -49,6 +49,7 @@ else:
 from lute.execution.ipc import (
     Communicator,
     Message,
+    MessageType,
     PipeCommunicator,
     SocketCommunicator,
     TaskRequest,
@@ -282,7 +283,7 @@ class Task(ABC):
             self._report_to_executor(results_msg)
         time.sleep(0.1)
 
-    def _report_to_executor(self, msg: Message) -> None:
+    def _report_to_executor(self, msg: MessageType) -> None:
         """Send a message to the Executor.
 
         Details of `Communicator` choice are hidden from the caller. This

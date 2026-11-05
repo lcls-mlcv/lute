@@ -202,12 +202,12 @@ def crystfel_to_pixel_map(geometry_desc: CrystfelDetectorGeometry) -> PixelMaps:
         ssy: float
         # ssz: float
         ssx, ssy, _ = geometry_desc["panels"][panel_name]["ss"]
-        y_panel: npt.NDArray[np.float32] = (
+        y_panel: npt.NDArray[np.float64] = (
             ss_grid * ssy
             + fs_grid * fsy
             + geometry_desc["panels"][panel_name]["corner_y"]
         )
-        x_panel: npt.NDArray[np.float32] = (
+        x_panel: npt.NDArray[np.float64] = (
             ss_grid * ssx
             + fs_grid * fsx
             + geometry_desc["panels"][panel_name]["corner_x"]

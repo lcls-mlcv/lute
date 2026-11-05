@@ -32,11 +32,19 @@ def generate_concentric_sample_pts(
     cx: float = center[0]
     cy: float = center[1]
     # Reshape linear radii (peak indices) for broadcasting
-    radii: npt.NDArray[np.int64] = np.array([peak_radii]).reshape(-1, 1)
-    theta: npt.NDArray[np.float64] = np.linspace(0.0, 2 * np.pi, 200)
+    radii: np.ndarray[Tuple[int, int], np.dtype[np.int64]] = np.array(
+        [peak_radii], dtype=np.int64
+    ).reshape(-1, 1)
+    theta: np.ndarray[Tuple[int], np.dtype[np.float64]] = np.linspace(
+        0.0, 2 * np.pi, 200, dtype=np.float64
+    )
 
-    coords_x: npt.NDArray[np.float64] = radii * np.cos(theta) + cx
-    coords_y: npt.NDArray[np.float64] = radii * np.sin(theta) + cy
+    coords_x: np.ndarray[Tuple[int, int], np.dtype[np.float64]] = (
+        radii * np.cos(theta) + cx
+    ).astype(np.float64)
+    coords_y: np.ndarray[Tuple[int, int], np.dtype[np.float64]] = (
+        radii * np.sin(theta) + cy
+    ).astype(np.float64)
 
     # Reshape for optimization routines
     coords: npt.NDArray[np.float64] = np.zeros((2, num_pts * len(peak_radii)))

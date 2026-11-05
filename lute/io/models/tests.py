@@ -31,14 +31,16 @@ __author__ = "Gabriel Dorlhiac"
 
 from typing import Dict, Any, Optional
 
-from pydantic import (
-    BaseModel,
-    Field,
-    validator,
-)
+import pydantic
 
-from .base import TaskParameters, ThirdPartyParameters
-from ..db import read_latest_db_entry
+from lute.io.models.base import TaskParameters, ThirdPartyParameters
+from lute.io.db import read_latest_db_entry
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import BaseModel, Field, validator  # type: ignore
+else:
+    from pydantic import BaseModel, Field, validator
 
 
 class TestParameters(TaskParameters):

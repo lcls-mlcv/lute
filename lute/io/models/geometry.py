@@ -11,10 +11,16 @@ __author__ = "Gabriel Dorlhiac"
 
 from typing import Optional, Tuple
 
-from pydantic import Field
+import pydantic
 
 from lute.io.models.base import TaskParameters
 from lute.io.models.validators import validate_smd_path
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import Field  # type: ignore
+else:
+    from pydantic import Field
 
 
 class OptimizeAgBhGeometryExhaustiveParameters(TaskParameters):

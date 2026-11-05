@@ -16,20 +16,35 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, Tuple
 
-from pydantic import (
-    BaseModel,
-    AnyUrl,
-    Field,
-    NonNegativeInt,
-    PositiveFloat,
-    PositiveInt,
-    conint,
-    validator,
-)
+import pydantic
 
 from lute.io.db import read_latest_db_entry
 from lute.io.models.base import ThirdPartyParameters, TaskParameters, TemplateConfig
 from lute.io.models.validators import template_parameter_validator
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import (  # type: ignore
+        BaseModel,
+        AnyUrl,
+        Field,
+        NonNegativeInt,
+        PositiveFloat,
+        PositiveInt,
+        conint,
+        validator,
+    )
+else:
+    from pydantic import (
+        BaseModel,
+        AnyUrl,
+        Field,
+        NonNegativeInt,
+        PositiveFloat,
+        PositiveInt,
+        conint,
+        validator,
+    )
 
 
 class IndexCrystFELParameters(ThirdPartyParameters):

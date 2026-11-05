@@ -325,8 +325,8 @@ class OptimizeAgBhGeometryExhaustive(Task):
 
     def _radial_profile(
         self,
-        powder: npt.NDArray[np.float64],
-        mask: Optional[npt.NDArray[np.bool_]],
+        powder: np.ndarray[Tuple[int, int], np.dtype[np.float64]],
+        mask: Optional[np.ndarray[Tuple[int, int], np.dtype[np.bool_]]],
         center: Tuple[float, float],
         threshold: float = 10.0,
         filter_profile: bool = False,
@@ -359,21 +359,23 @@ class OptimizeAgBhGeometryExhaustive(Task):
             radial_profile (npt.NDArray[np.float64]): 1-D array of peak intensities
                 for an azimuthally integrated powder image.
         """
-        y: npt.NDArray[np.int64]
-        x: npt.NDArray[np.int64]
+        y: np.ndarray[Tuple[int, int], np.dtype[np.int64]]
+        x: np.ndarray[Tuple[int, int], np.dtype[np.int64]]
         y, x = np.indices(powder.shape)
-        radius_map: npt.NDArray[np.float64] = (
+        radius_map: np.ndarray[Tuple[int, int], np.dtype[np.float64]] = (
             (x - center[0]) ** 2 + (y - center[1]) ** 2
         ) ** 0.5
 
         if mask is not None:
             radius_map = np.where(mask == 1, radius_map, 0)
 
-        radius_map_int: npt.NDArray[np.int64] = radius_map.astype(np.int64)
-        tbin: npt.NDArray[np.int64] = np.bincount(
-            radius_map_int.ravel(), powder.ravel()
+        radius_map_int: np.ndarray[Tuple[int, int], np.dtype[np.int64]] = (
+            radius_map.astype(np.int64)
         )
-        nr: npt.NDArray[np.int64] = np.bincount(radius_map_int.ravel())
+        tbin = np.bincount(radius_map_int.ravel(), powder.ravel())
+        nr: np.ndarray[Tuple[int], np.dtype[np.int64]] = np.bincount(
+            radius_map_int.ravel()
+        )
         radial_profile: npt.NDArray[np.float64] = np.divide(
             tbin, nr, out=np.zeros(nr.shape[0]), where=nr != 0
         )
@@ -721,11 +723,13 @@ class OptimizeAgBhGeometryExhaustive(Task):
                 Tuple[float, float], final_centers[best_idx]
             )
             # Calculate resolution at edge
-            theta: float = np.arctan(
+            theta: np.ndarray[Tuple[()], np.dtype[np.float64]] = np.arctan(
                 np.array((powder.shape[0] / 2)) * pixel_size_mm / best_distance
             )
-            q: float = 2.0 * np.sin(theta / 2.0) / wavelength_angs
-            edge_resolution: float = 1.0 / q
+            q: np.ndarray[Tuple[()], np.dtype[np.float64]] = (
+                2.0 * np.sin(theta / 2.0) / wavelength_angs
+            )
+            edge_resolution: np.ndarray[Tuple[()], np.dtype[np.float64]] = 1.0 / q
 
             self._result.summary = []
             self._result.summary.append(

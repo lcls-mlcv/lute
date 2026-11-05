@@ -126,7 +126,7 @@ def record_parameters_db(params: TaskParameters) -> Optional[RowIds]:
                 "Cannot store result."
             )
         )
-        return
+        return None
     assert hasattr(params, "lute_config")
     del params.lute_config.work_dir
 

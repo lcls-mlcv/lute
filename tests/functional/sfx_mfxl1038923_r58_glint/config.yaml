@@ -1,0 +1,50 @@
+%YAML 1.3
+---
+title: "SFX GLINT test: mfxl1038923 r58"
+experiment: "mfxl1038923"
+run: 58
+date: "2026/09/24"
+lute_version: 0.3.0      # Do not be change unless need to force older version
+task_timeout: 30000
+work_dir: "/tmp"
+...
+---
+FindPeaksSFX:
+    outdir: "{{ work_dir }}/sfx_mfxl1038923_r58_glint_peaks"
+    out_file: "{{ work_dir }}/sfx_mfxl1038923_r58_glint_peaks/sfx_mfxl1038923_r58_glint.list"
+    tag: "sfx_mfxl1038923_r58_glint"
+    det_name: "epix10k2M"
+    event_receiver: "evr0"
+    psana_version: 1
+    event_logic: false
+    psana_mask: false
+    mask_file: null
+    min_peaks: 15
+    max_peaks: 2048
+    npix_min: 2
+    npix_max: 30
+    amax_thr: 300
+    son_min: 5.0
+    peak_rank: 3
+    r0: 3.0
+    dr: 2.0
+    nsigm: 10.0
+    pv_camera_length: 0.0   # the .geom carries a numeric clen
+    n_events: 3000
+    geometry_file: "/sdf/group/lcls/ds/tools/lute/test_utilities/sfx/mfxl1038923_r0058.geom"
+    make_powder_plots: false
+
+IndexGLINT:
+    images: "{{ work_dir }}/sfx_mfxl1038923_r58_glint_peaks/sfx_mfxl1038923_r58_glint.list"
+    peakfinder: "stored"     # reuse FindPeaksSFX's peakfinder8 peaks
+    geom: "/sdf/group/lcls/ds/tools/lute/test_utilities/sfx/mfxl1038923_r0058.geom"
+    out: "{{ work_dir }}/sfx_mfxl1038923_r58_glint.stream"
+    nbest: 3
+    gate: "strict"        # write only frames that pass the strict bar (GLINT --gate)
+    device: "auto"
+
+ConcatenateStreamFiles:
+    in_file: "{{ work_dir }}"
+    tag: "sfx_mfxl1038923_r58_glint"
+    out_file: "{{ work_dir }}/mfxl1038923_r58_glint_all.stream"
+...

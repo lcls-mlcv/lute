@@ -30,19 +30,35 @@ import copy
 import os
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import (
-    BaseModel,
-    BaseSettings,
-    PositiveInt,
-    Field,
-    root_validator,
-    validator,
-    PrivateAttr,
-)
-from pydantic.dataclasses import dataclass
-from pydantic.schema import default_ref_template
+import pydantic
 
 from lute.io.parameters import LUTE_PARAMETER_CONFIG_KEYS
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import (  # type: ignore
+        BaseModel,
+        BaseSettings,
+        PositiveInt,
+        Field,
+        root_validator,
+        validator,
+        PrivateAttr,
+    )
+    from pydantic.v1.dataclasses import dataclass  # type: ignore
+    from pydantic.v1.schema import default_ref_template  # type: ignore
+else:
+    from pydantic import (
+        BaseModel,
+        BaseSettings,
+        PositiveInt,
+        Field,
+        root_validator,
+        validator,
+        PrivateAttr,
+    )
+    from pydantic.dataclasses import dataclass
+    from pydantic.schema import default_ref_template
 
 
 class AnalysisHeader(BaseModel):
@@ -392,7 +408,7 @@ class ThirdPartyParameters(TaskParameters):
         new_values: Dict[str, Any] = {}
         for key in values:
             if key not in cls.__fields__:
-                new_values[key] = TemplateParameters(params=values[key])
+                new_values[key] = TemplateParameters(params=values[key])  # type: ignore
                 param_schema: Dict[str, Any] = param_schema_template.copy()
                 param_schema["title"] = key
                 param_schema["properties"]["params"] = values[key]

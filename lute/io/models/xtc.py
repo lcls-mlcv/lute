@@ -7,9 +7,15 @@ Classes:
 
 from typing import Dict, List, Optional, Tuple, Union
 
-from pydantic import BaseModel, Field
+import pydantic
 
 from lute.io.models.base import TaskParameters
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import BaseModel, Field  # type: ignore
+else:
+    from pydantic import BaseModel, Field
 
 
 class ConversionSpecification(BaseModel):

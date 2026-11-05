@@ -509,9 +509,9 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
         con (sqlite3.Connection): A connection to the database.
     """
     query: str = """
-    CREATE UNIQUE INDEX environment_index_0 ON environment (execution_id, name);
+    CREATE UNIQUE INDEX IF NOT EXISTS environment_index_0 ON environment (execution_id, name);
 
-    CREATE TRIGGER check_schema_update
+    CREATE TRIGGER IF NOT EXISTS check_schema_update
     BEFORE UPDATE ON schema
     BEGIN
         SELECT
@@ -521,7 +521,7 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
         END;
     END;
 
-    CREATE TRIGGER check_schema_insert
+    CREATE TRIGGER IF NOT EXISTS check_schema_insert
     BEFORE INSERT ON schema
     BEGIN
         SELECT
@@ -531,7 +531,7 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
         END;
     END;
 
-    CREATE TRIGGER check_version_update
+    CREATE TRIGGER IF NOT EXISTS check_version_update
     BEFORE UPDATE ON task_version
     BEGIN
         SELECT
@@ -541,7 +541,7 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
         END;
     END;
 
-    CREATE TRIGGER check_version_insert
+    CREATE TRIGGER IF NOT EXISTS check_version_insert
     BEFORE INSERT ON task_version
     BEGIN
         SELECT
@@ -551,7 +551,7 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
         END;
     END;
 
-    CREATE TRIGGER check_executors_update
+    CREATE TRIGGER IF NOT EXISTS check_executors_update
     BEFORE UPDATE ON executors
     BEGIN
         SELECT
@@ -561,7 +561,7 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
         END;
     END;
 
-    CREATE TRIGGER check_executors_insert
+    CREATE TRIGGER IF NOT EXISTS check_executors_insert
     BEFORE INSERT ON executors
     BEGIN
         SELECT
@@ -985,7 +985,7 @@ def _add_version(
         enum_val >>= 1
     if version_specifier is not None and version_specifier > enum_val_sum:
         # Want hard error? Or just warning?
-        logger.warn(
+        logger.warning(
             f"Combination version specifier value of {version_specifier} is invalid! "
             f"The max expected value (combo of all known enumerators) is {enum_val_sum}. "
             "We will continue. But the version information will be unusable upon retrieval!"

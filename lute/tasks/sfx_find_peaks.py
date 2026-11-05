@@ -986,11 +986,9 @@ class FindPeaksSFX(Task):
 
             det: Any = Detector(self._task_parameters.det_name)
             det.do_reshape_2d_to_3d(flag=True)
-            i_x = det.indexes_x(self._task_parameters.lute_config.run).astype(np.int64)
-            i_y = det.indexes_y(self._task_parameters.lute_config.run).astype(np.int64)
-            ipx, ipy = det.point_indexes(
-                self._task_parameters.lute_config.run, pxy_um=(0, 0)
-            )
+            i_x = det.indexes_x(run_num).astype(np.int64)
+            i_y = det.indexes_y(run_num).astype(np.int64)
+            ipx, ipy = det.point_indexes(run_num, pxy_um=(0, 0))
 
             return DetectorGeomInfo(i_x=i_x, i_y=i_y, ipx=ipx, ipy=ipy)
 
@@ -1092,6 +1090,7 @@ class FindPeaksSFX(Task):
             det: Any = Detector(self._task_parameters.det_name)
             det.do_reshape_2d_to_3d(flag=True)
             evr: Any = Detector(self._task_parameters.event_receiver)
+            ebeam: Any = Detector("EBeam")
 
             if self._task_parameters.n_events != 0:
                 ds.break_after(self._task_parameters.n_events)
@@ -1101,7 +1100,14 @@ class FindPeaksSFX(Task):
                 seconds: int = evt_id.time()[0]
                 nanoseconds: int = evt_id.time()[1]
                 fiducials: int = evt_id.fiducials()
-                event_codes: Any = evr.eventCodes(evt)
+
+                if self._task_parameters.event_logic:
+                    event_codes: Any = evr.eventCodes(evt)
+                    if (
+                        event_codes is None
+                        or self._task_parameters.event_code not in event_codes
+                    ):
+                        continue
 
                 if isinstance(self._task_parameters.pv_camera_length, float):
                     clen: float = self._task_parameters.pv_camera_length
@@ -1112,13 +1118,9 @@ class FindPeaksSFX(Task):
                         .value(self._task_parameters.pv_camera_length)
                     )
 
-                if self._task_parameters.event_logic:
-                    if self._task_parameters.event_code not in event_codes:
-                        continue
-
                 photon_energy: float
                 try:
-                    photon_energy = Detector("EBeam").get(evt).ebeamPhotonEnergy()
+                    photon_energy = ebeam.get(evt).ebeamPhotonEnergy()
                     if np.isinf(photon_energy):
                         raise ValueError
                 except (AttributeError, ValueError):
@@ -1127,56 +1129,50 @@ class FindPeaksSFX(Task):
                         / ds.env().epicsStore().value("SIOC:SYS0:ML00:AO192")
                     ) * 1e9
 
+                # Keep the detector's own (panels, ss, fs) shape, as the psana2 branch
+                # does: _run reshapes image and mask to the CrystFEL slab itself.
                 data = det.calib(evt)
                 if first_event:
-                    mask: Optional[npt.NDArray[np.uint8]] = None
-                if data:
-                    det_shape: Tuple[int, ...] = data.shape
-                    if len(det_shape) == 3:
-                        det_shape = (det_shape[0] * det_shape[1], det_shape[2])
-                    else:
-                        det_shape = data.shape
-
-                        if first_event:
-                            mask = np.ones(det_shape, dtype=np.uint8)
-                            psana_mask = det.mask(
-                                self._task_parameters.lute_config.run,
-                                calib=False,
-                                status=True,
-                                edges=False,
-                                centra=False,
-                                unbond=False,
-                                unbondnbrs=False,
-                            ).astype(np.uint8)
-                            if psana_mask:
-                                mask = psana_mask
-
-                            first_event = False
-
-                            yield EventMaskData(
-                                data,
-                                mask,
-                                seconds,
-                                nanoseconds,
-                                fiducials,
-                                clen,
-                                photon_energy,
-                            )
-                        else:
-                            yield EventData(
-                                data,
-                                seconds,
-                                nanoseconds,
-                                fiducials,
-                                clen,
-                                photon_energy,
-                            )
+                    if data is None:
+                        continue
+                    mask: npt.NDArray[np.uint8] = np.ones(data.shape, dtype=np.uint8)
+                    psana_mask: Optional[npt.NDArray[Any]] = det.mask(
+                        run_num,
+                        calib=False,
+                        status=True,
+                        edges=False,
+                        central=False,
+                        unbond=False,
+                        unbondnbrs=False,
+                    )
+                    if psana_mask is not None:
+                        mask = psana_mask.astype(np.uint8).reshape(data.shape)
+                    first_event = False
+                    yield EventMaskData(
+                        data,
+                        mask,
+                        seconds,
+                        nanoseconds,
+                        fiducials,
+                        clen,
+                        photon_energy,
+                    )
+                else:
+                    yield EventData(
+                        data,
+                        seconds,
+                        nanoseconds,
+                        fiducials,
+                        clen,
+                        photon_energy,
+                    )
 
     def _run(self) -> None:
         rank: int = COMM_WORLD.Get_rank()
         size: int = COMM_WORLD.Get_size()
 
-        i_x, i_y, ipx, ipy = self._retrieve_psana_detector_data()
+        lcls2: bool = self._task_parameters.psana_version == 2
+        i_x, i_y, ipx, ipy = self._retrieve_psana_detector_data(lcls2=lcls2)
 
         alg: Optional[
             Union[
@@ -1197,7 +1193,7 @@ class FindPeaksSFX(Task):
         file_writer: Optional[CxiWriter] = None
         powder_hits: Optional[npt.NDArray[np.float64]] = None
         powder_misses: Optional[npt.NDArray[np.float64]] = None
-        for event_data in self._event_generator():
+        for event_data in self._event_generator(lcls2=lcls2):
             if first_event:
                 assert isinstance(event_data, EventMaskData)
                 (

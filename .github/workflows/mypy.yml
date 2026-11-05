@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0                     # v7
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1                 # v6
         with:
-          python-version: '3.9'
+          python-version: '3.13'
       - uses: mpi4py/setup-mpi@f200dce75b64188be849b46657dcf86c721937b2                     # v1 (...rolling)
       - run: "pip install mypy==1.13"                                                       # v1 above == v1.4.3
       - name: "Install python dependencies"

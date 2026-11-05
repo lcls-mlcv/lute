@@ -358,7 +358,7 @@ def _get_current_run_status(update_url: str) -> Dict[str, Union[str, int, float]
     resp: requests.models.Response = requests.post(
         get_url,
         json=job_doc,
-        headers={"Authorization": os.environ.get("Authorization")},
+        headers={"Authorization": os.environ.get("Authorization", "")},
     )
     current_status: Dict[str, Union[str, int, float]] = {
         d["key"]: d["value"] for d in resp.json()["value"]

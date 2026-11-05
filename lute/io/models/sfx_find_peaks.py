@@ -2,9 +2,15 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, PositiveInt, validator, root_validator
+import pydantic
 
 from lute.io.models.base import ThirdPartyParameters, TaskParameters, TemplateConfig
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import BaseModel, Field, PositiveInt, validator, root_validator  # type: ignore
+else:
+    from pydantic import BaseModel, Field, PositiveInt, validator, root_validator
 
 
 class SZCompressorParameters(BaseModel):
@@ -70,6 +76,12 @@ class FindPeaksSFXParameters(TaskParameters):
         0,
         description="Required events code for events to be processed if event logic "
         "is True",
+    )
+    psana_version: Literal[1, 2] = Field(
+        2,
+        description="psana generation of the data: 2 for LCLS-II xtc2, 1 for LCLS-I xtc. "
+        "psana 1 must run in a psana1 environment: use the PeakFinderSFXPsana1 managed "
+        "Task, which sources conda1.",
     )
     psana_mask: bool = Field(
         False,

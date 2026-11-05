@@ -23,12 +23,18 @@ import logging
 import os
 from typing import List, Dict, Any, Tuple, Optional, Union
 
-from pydantic import BaseModel
+import pydantic
 
 from lute.io._db.common_sqlite import DatabaseError
 from lute.execution.logging import get_logger
 from lute.io.models.base import TaskParameters, TemplateParameters
 from lute.tasks.dataclasses import TaskResult, TaskStatus, DescribedAnalysis
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import BaseModel  # type: ignore
+else:
+    from pydantic import BaseModel
 
 if __debug__:
     logging.basicConfig(level=logging.DEBUG)

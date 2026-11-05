@@ -2,9 +2,11 @@
 
 Functions:
     setup_smd2_env(): Sets up psana2 environment variables.
+    setup_glint_env(): GLINT's torch environment (ana-4.0.58-py3-minipytorch) and checkout.
+    setup_glint_env_ana59(): The same in ana-4.0.59-py3-minipytorch.
 """
 
-__all__ = ["setup_smd2_env"]
+__all__ = ["setup_smd2_env", "setup_glint_env", "setup_glint_env_ana59"]
 __author__ = "Gabriel Dorlhiac"
 
 import os
@@ -137,3 +139,46 @@ def setup_smd2_env() -> Dict[str, str]:
     psana_vars["PS_N_RANKS"] = str(n_ranks)
 
     return psana_vars
+
+
+GLINT_CONDA1_ENVS: str = "/sdf/group/lcls/ds/ana/sw/conda1/inst/envs"
+GLINT_ANA_ENV: str = "ana-4.0.58-py3-minipytorch"
+"""Default GLINT environment: torch 2.1. Cannot parse Jungfrau.ConfigV4 (see GLINT_ANA_ENV_ALT)."""
+GLINT_ANA_ENV_ALT: str = "ana-4.0.59-py3-minipytorch"
+"""torch 1.11; reads the detector ConfigV versions 4.0.58 cannot. Same GLINT code runs on both."""
+
+
+def _glint_env(conda_env: str) -> Dict[str, str]:
+    """Environment of the GLINT ThirdPartyTask, on top of conda1's psconda.sh (shell_source).
+
+    What `conda activate <conda_env>` adds to psconda.sh on S3DF (measured 2026-10-09) is PATH,
+    CUDA_PATH (cupy's activate hook) and the two CONDA_ markers; SIT_* come from psconda.sh. PYTHONPATH
+    is the GLINT root alone: the interpreter here is the environment's python 3.9 with torch, and must
+    not inherit the Executor's own site-packages.
+
+    Args:
+        conda_env (str): Name of the conda1 environment.
+
+    Returns:
+        env (Dict[str, str]): Environment variables for the Task.
+    """
+    from lute.io.models.glint_index import glint_root
+
+    prefix: str = f"{GLINT_CONDA1_ENVS}/{conda_env}"
+    return {
+        "PATH": f"{prefix}/bin:{os.environ.get('PATH', '')}",
+        "PYTHONPATH": glint_root(),
+        "CUDA_PATH": prefix,
+        "CONDA_PREFIX": prefix,
+        "CONDA_DEFAULT_ENV": conda_env,
+    }
+
+
+def setup_glint_env() -> Dict[str, str]:
+    """GLINT in its default environment, GLINT_ANA_ENV. See `_glint_env`."""
+    return _glint_env(GLINT_ANA_ENV)
+
+
+def setup_glint_env_ana59() -> Dict[str, str]:
+    """GLINT in GLINT_ANA_ENV_ALT, for detectors whose ConfigV the default cannot read."""
+    return _glint_env(GLINT_ANA_ENV_ALT)

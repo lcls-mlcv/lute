@@ -1,0 +1,64 @@
+%YAML 1.3
+---
+title: "SFX CrystFEL test: mfx101343025 r194"
+experiment: "mfx101343025"
+run: 194
+date: "2026/09/24"
+lute_version: 0.3.0      # Do not be change unless need to force older version
+task_timeout: 30000
+work_dir: "/tmp"
+...
+---
+FindPeaksSFX:
+    outdir: "{{ work_dir }}/sfx_mfx101343025_r194_crystfel_peaks"
+    out_file: "{{ work_dir }}/sfx_mfx101343025_r194_crystfel_peaks/sfx_mfx101343025_r194_crystfel.list"
+    tag: "sfx_mfx101343025_r194_crystfel"
+    det_name: "jungfrau"
+    event_receiver: "evr0"
+    event_logic: false
+    psana_mask: false
+    mask_file: null
+    min_peaks: 10
+    max_peaks: 2048
+    npix_min: 2
+    npix_max: 30
+    amax_thr: 5000        # see README: the 4-6 A band of faint peaks is not crystals
+    son_min: 5.0
+    peak_rank: 3
+    r0: 4.0
+    dr: 2.0
+    nsigm: 10.0
+    pv_camera_length: 0.0   # the .geom carries a numeric clen
+    n_events: 3000
+    geometry_file: "/sdf/group/lcls/ds/tools/lute/test_utilities/sfx/mfx101343025_r0139_refined.geom"
+    make_powder_plots: false
+
+IndexCrystFEL:
+    in_file: "{{ work_dir }}/sfx_mfx101343025_r194_crystfel_peaks/sfx_mfx101343025_r194_crystfel.list"
+    out_file: "{{ work_dir }}/sfx_mfx101343025_r194_crystfel.stream"
+    geometry: "/sdf/group/lcls/ds/tools/lute/test_utilities/sfx/mfx101343025_r0139_refined.geom"
+    indexing: "xgandalf"
+    peaks: "cxi"             # index the peakfinder8 peaks stored in the .cxi
+    int_radius: "3,4,6"
+    multi: true
+    cell_file: "/sdf/group/lcls/ds/tools/lute/test_utilities/sfx/maybe_lyso.cell"
+
+ConcatenateStreamFiles:
+    in_file: "{{ work_dir }}"
+    tag: "sfx_mfx101343025_r194_crystfel"
+    out_file: "{{ work_dir }}/mfx101343025_r194_crystfel_all.stream"
+
+MergePartialator:
+    in_file: "{{ work_dir }}/mfx101343025_r194_crystfel_all.stream"
+    out_file: "{{ work_dir }}/mfx101343025_r194_crystfel.hkl"
+    symmetry: "2/m_uab"
+    model: "unity"
+
+CompareHKL:
+    cell_file: "/sdf/group/lcls/ds/tools/lute/test_utilities/sfx/maybe_lyso.cell"
+    symmetry: "2/m_uab"
+    fom: "CC"            # overall CC1/2: the pass criterion (README)
+
+ManipulateHKL:
+    cell_file: "/sdf/group/lcls/ds/tools/lute/test_utilities/sfx/maybe_lyso.cell"
+...

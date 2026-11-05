@@ -10,12 +10,19 @@ __author__ = "Louis Conreux"
 
 import os
 from typing import Any, Dict, List, Literal, Tuple, Optional
-from pydantic import BaseModel, Field, validator
+
+import pydantic
 
 from lute.io.models.base import TaskParameters
 from lute.io.models.validators import (
     validate_smd_path,
 )
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import BaseModel, Field, validator  # type: ignore
+else:
+    from pydantic import BaseModel, Field, validator
 
 
 def validate_geometry_path(output_path_name: str):

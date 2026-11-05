@@ -1,0 +1,10 @@
+!LUTE_DAG
+task_name: "PeakFinderSFXPsana1"
+slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=73 --exclusive"
+next:
+- task_name: "GLINTIndexer"
+  slurm_params: "--account=lcls:data --partition=ampere --nodes=1 --ntasks-per-node=1 --gres=gpu:a100:1"
+  next:
+  - task_name: "StreamFileConcatenator"
+    slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=2"
+    next: []

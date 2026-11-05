@@ -49,7 +49,20 @@ import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, ClassVar, Dict, IO, List, Optional, Set, Tuple, Union, cast
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    IO,
+    List,
+    Optional,
+    Protocol,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 from typing_extensions import Self
 
 LUTE_SIGNALS: Set[str] = {
@@ -114,6 +127,15 @@ class Party(Enum):
     """
 
 
+ContentsType = TypeVar("ContentsType")
+SignalType = TypeVar("SignalType")
+
+
+class MessageType(Protocol[ContentsType, SignalType]):
+    contents: ContentsType
+    signal: SignalType
+
+
 @dataclass
 class Message:
     contents: Optional[Any] = None
@@ -134,19 +156,19 @@ class TaskResponse:
 
 
 @dataclass
-class TaskRequestMessage(Message):
+class TaskRequestMessage:
     contents: TaskRequest
     signal: str = "TASK_REQUEST"
 
 
 @dataclass
-class TaskResponseMessage(Message):
+class TaskResponseMessage:
     contents: TaskResponse
     signal: str = "TASK_RESPONSE"
 
 
 @dataclass
-class TaskMetadataMessage(Message):
+class TaskMetadataMessage:
     contents: Dict[str, Any]
     signal: str = "TASK_METADATA"
 
@@ -173,7 +195,7 @@ class Communicator(ABC):
         ...
 
     @abstractmethod
-    def write(self, msg: Message, proc: Optional[subprocess.Popen] = None) -> None:
+    def write(self, msg: MessageType, proc: Optional[subprocess.Popen] = None) -> None:
         """Method for sending data through the communication mechanism."""
         ...
 
@@ -401,7 +423,7 @@ class PipeCommunicator(Communicator):
                     contents = None
         return contents
 
-    def write(self, msg: Message, proc: Optional[subprocess.Popen] = None) -> None:
+    def write(self, msg: MessageType, proc: Optional[subprocess.Popen] = None) -> None:
         """Write to stdout and stderr (Task) or proc.stdin (Executor).
 
          The signal component is sent to `stderr` while the contents of the
@@ -725,7 +747,7 @@ class SocketCommunicator(Communicator):
     # Write
     ############################################################################
 
-    def _write_socket(self, msg: Message) -> None:
+    def _write_socket(self, msg: MessageType) -> None:
         """Sends data over a socket from the 'client' (Task) side.
 
         Messages are encoded in the following format:
@@ -751,7 +773,7 @@ class SocketCommunicator(Communicator):
             assert isinstance(self._data_socket, socket.socket)
             self._data_socket.sendall(packed_msg)
 
-    def write(self, msg: Message, proc: Optional[subprocess.Popen] = None) -> None:
+    def write(self, msg: MessageType, proc: Optional[subprocess.Popen] = None) -> None:
         """Send a single Message.
 
         The entire Message (signal and contents) is serialized and sent through

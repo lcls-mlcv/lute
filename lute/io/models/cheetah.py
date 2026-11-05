@@ -11,11 +11,17 @@ import os
 import warnings
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, root_validator, validator
+import pydantic
 
 from lute.io.models.base import TemplateConfig, ThirdPartyParameters
 from lute.io.models.sfx_find_peaks import SZCompressorParameters
 from lute.io.models.validators import template_parameter_validator
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import BaseModel, Field, root_validator, validator  # type: ignore
+else:
+    from pydantic import BaseModel, Field, root_validator, validator
 
 CommonDataSourceTypes = Literal[
     "TimestampFromEvent",

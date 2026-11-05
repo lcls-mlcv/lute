@@ -144,7 +144,7 @@ script-files = [
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py313']
 include = '\.pyi?$'
 extend-exclude = '''(
     .*.sh

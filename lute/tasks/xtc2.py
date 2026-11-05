@@ -590,7 +590,7 @@ class WriteXtc2(Task):
 
                     chunkinfo.chunkinfo.chunkid = np.uint32(self._mpi_rank + 1)
                     next_filename: str = xtc_name_smd.replace(
-                        re.findall("-c\d\d\d", xtc_name_smd)[0],
+                        re.findall(r"-c\d\d\d", xtc_name_smd)[0],
                         f"-c{(self._mpi_rank + 1):03d}",
                     )
                     chunkinfo.chunkinfo.filename = next_filename + ".xtc2"
@@ -665,7 +665,7 @@ class WriteXtc2(Task):
             for r in range(self._mpi_size):
                 next_rank: int = r + 1
                 next_chunk_filename: str = xtc_name_smd.replace(
-                    re.findall("-c\d\d\d", xtc_name_smd)[0],
+                    re.findall(r"-c\d\d\d", xtc_name_smd)[0],
                     f"-c{next_rank:03d}",
                 )
                 next_chunk_filename += ".xtc2"

@@ -1,0 +1,22 @@
+!LUTE_DAG
+task_name: "PeakFinderSFX"
+slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=73 --exclusive"
+next:
+- task_name: "GLINTIndexer"
+  slurm_params: "--account=lcls:data --partition=ampere --nodes=1 --ntasks-per-node=1 --gres=gpu:a100:1"
+  next:
+  - task_name: "CrystFELIndexer"
+    slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=73 --exclusive"
+    next:
+    - task_name: "StreamFileConcatenator"
+      slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=2"
+      next:
+      - task_name: "PartialatorMerger"
+        slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=73 --exclusive"
+        next:
+        - task_name: "HKLComparer"
+          slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=8"
+          next: []
+        - task_name: "HKLManipulator"
+          slurm_params: "--account=lcls:data --partition=milano --nodes=1 --ntasks-per-node=8"
+          next: []

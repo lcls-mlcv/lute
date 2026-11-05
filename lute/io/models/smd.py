@@ -29,18 +29,32 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
-from pydantic import (
-    BaseModel,
-    HttpUrl,
-    PositiveInt,
-    NonNegativeInt,
-    Field,
-    root_validator,
-    validator,
-)
+import pydantic
 
 from lute.io.models.base import TaskParameters, ThirdPartyParameters, TemplateConfig
 from lute.io.models.validators import validate_smd_path, template_parameter_validator
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import (  # type: ignore
+        BaseModel,
+        HttpUrl,
+        PositiveInt,
+        NonNegativeInt,
+        Field,
+        root_validator,
+        validator,
+    )
+else:
+    from pydantic import (
+        BaseModel,
+        HttpUrl,
+        PositiveInt,
+        NonNegativeInt,
+        Field,
+        root_validator,
+        validator,
+    )
 
 
 class SubmitSMDParameters(ThirdPartyParameters):

@@ -1570,7 +1570,7 @@ class AnalyzeSmallData(Task):
         self,
         tjumps: npt.NDArray[np.float64],
         processed_tjumps: npt.NDArray[np.float64],
-    ) -> pn.Tabs:
+    ) -> pn.GridSpec:
         """Plot the temperature jump analysis for XSS.
 
         Args:

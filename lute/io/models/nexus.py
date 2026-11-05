@@ -10,9 +10,15 @@ __author__ = "Fred Poitevin and Gabriel Dorlhiac"
 
 from typing import Any, Dict, Union
 
-from pydantic import Field, validator
+import pydantic
 
 from lute.io.models.base import TaskParameters
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import Field, validator  # type: ignore
+else:
+    from pydantic import Field, validator
 
 
 class ConvertSMDToNexusParameters(TaskParameters):

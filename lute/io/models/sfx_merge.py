@@ -23,11 +23,17 @@ __author__ = "Gabriel Dorlhiac"
 import os
 from typing import Union, List, Optional, Dict, Any
 
-from pydantic import Field, validator, BaseModel
+import pydantic
 
 from lute.io.db import read_latest_db_entry
 from lute.io.models.base import ThirdPartyParameters, TemplateConfig
 from lute.io.models.validators import template_parameter_validator
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import Field, validator, BaseModel  # type: ignore
+else:
+    from pydantic import Field, validator, BaseModel
 
 
 class MergePartialatorParameters(ThirdPartyParameters):

@@ -11,7 +11,7 @@ import os
 import sys
 import time
 import yaml
-from typing import Any, Dict, Literal, Tuple
+from typing import Any, Dict, Literal, Tuple, cast
 from typing_extensions import TypedDict
 
 import requests
@@ -25,7 +25,6 @@ from lute.execution.launch import (
     LuteParams,
     LuteLaunchConfig,
 )
-
 
 # Requests, urllib have lots of debug statements. Only set level for this logger
 logger: logging.Logger = logging.getLogger("Launch_Prefect")
@@ -130,7 +129,9 @@ def main() -> None:
         "Prefect-Csrf-Client": client,
     }
 
-    resp = requests.post(launch_endpoint, headers=headers, json=data, auth=auth)
+    resp = requests.post(
+        launch_endpoint, headers=headers, json=cast(dict, data), auth=auth
+    )
 
     flow_run_id: str = resp.json()["id"]
 

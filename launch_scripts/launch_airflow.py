@@ -11,7 +11,7 @@ import os
 import sys
 import time
 import uuid
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict, cast
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -154,7 +154,7 @@ def main() -> None:
         try:
             resp.raise_for_status()
         except requests.exceptions.HTTPError as err:
-            if err.response.status_code == 404:
+            if err.response is not None and err.response.status_code == 404:
                 # Workflow definition not found so previous DAG completed properly
                 resp = requests.post(
                     f"{airflow_instance}/{airflow_api_endpoints['create_defn']}",
@@ -198,7 +198,7 @@ def main() -> None:
 
     resp = requests.post(
         f"{airflow_instance}/{airflow_api_endpoints['run_dag']}",
-        json=dag_run_data,
+        json=cast(dict, dag_run_data),
         auth=airflow_auth,
     )
     resp.raise_for_status()

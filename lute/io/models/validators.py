@@ -11,9 +11,15 @@ __author__ = ["Gabriel Dorlhiac"]
 import os
 from typing import Dict, Any, Optional
 
-from pydantic import validator, BaseModel
+import pydantic
 
 from lute.io.db import read_latest_db_entry
+
+pydantic_ver: int = int(pydantic.version.VERSION[0])
+if pydantic_ver > 1:
+    from pydantic.v1 import validator, BaseModel  # type: ignore
+else:
+    from pydantic import validator, BaseModel
 
 
 def template_parameter_validator(template_params_name: str):

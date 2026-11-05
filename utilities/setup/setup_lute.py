@@ -13,7 +13,6 @@ from typing import List, Dict, Any, Optional
 
 from krtc import KerberosTicket  # type: ignore
 
-
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -60,7 +59,7 @@ DEFAULT_CONFIG = {
             "ntasks_per_node": 64,
             "exclusive": True,
         },
-    }
+    },
 }
 
 
@@ -342,7 +341,11 @@ def modify_permissions(lute_path: str) -> None:
 
 
 def update_dag_params(
-    dag_path: str, partition: str, account: str, extra_slurm_params: str, default_config: dict,
+    dag_path: str,
+    partition: str,
+    account: str,
+    extra_slurm_params: str,
+    default_config: dict,
 ) -> None:
     """Update slurm_params in a DAG file in place.
 
@@ -390,9 +393,7 @@ def update_dag_params(
                 if cfg.get("exclusive"):
                     params += " --exclusive"
             else:
-                params = (
-                    f"--account={account} --partition={partition} --constraint={SLURM_CONSTRAINT} {extra_slurm_params}"
-                )
+                params = f"--account={account} --partition={partition} --constraint={SLURM_CONSTRAINT} {extra_slurm_params}"
             result.append(f"{indent}slurm_params: '{params}'\n")
         else:
             result.append(line)
@@ -545,7 +546,7 @@ def main() -> None:
         shutil.copy(std_hutch_config, config_path)
     os.chmod(config_path, 0o666)
     # Substitute the work_dir in LUTE's config to the experiment results folder.
-    sed_pattern: str = f's|work_dir:\(.*\)|work_dir: \\"{lute_output_dir}\\"|g'
+    sed_pattern: str = rf's|work_dir:\(.*\)|work_dir: \\"{lute_output_dir}\\"|g'
     inplace_sed(config_path, sed_pattern)
 
     database_setup(f"{lute_output_dir}/lute.db")  # Setup permissions on database
@@ -630,7 +631,9 @@ def main() -> None:
             shutil.copy(included_wf_defn, full_workflow_path)
         os.chmod(full_workflow_path, 0o666)
 
-        param_string: str = f"{launch_executable} -c {config_path} -W {full_workflow_path} --partition={partition} --account={account}"
+        param_string: str = (
+            f"{launch_executable} -c {config_path} -W {full_workflow_path} --partition={partition} --account={account}"
+        )
         if args.debug:
             param_string = f"{param_string} --debug"
         if args.test:
@@ -638,7 +641,9 @@ def main() -> None:
 
         # Update the DAG file in place with collected SLURM params
         config = DEFAULT_CONFIG.get(hutch.upper(), DEFAULT_CONFIG["ELSE"])
-        update_dag_params(full_workflow_path, partition, account, extra_slurm_params, config)
+        update_dag_params(
+            full_workflow_path, partition, account, extra_slurm_params, config
+        )
 
         # Build workflow dict with appropriate trigger
         if "smd" in wf_name:

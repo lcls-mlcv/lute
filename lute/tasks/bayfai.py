@@ -9,6 +9,13 @@ Classes:
 __all__ = ["BayFAI"]
 __author__ = "Louis Conreux"
 
+import os
+import logging
+import time
+from typing import Union
+
+import panel as pn  # type: ignore
+
 from lute.tasks._bayfai import BayFAIOpt
 from lute.io.models.bayfai import BayFAIParameters
 
@@ -97,7 +104,7 @@ class BayFAI(Task):
             import panel as pn  # type: ignore
 
             pn.extension("matplotlib", "bokeh")
-            plots = pn.Row(
+            plots: Union[pn.Row, pn.Tabs] = pn.Row(
                 pn.pane.Matplotlib(diagnostics_plot, sizing_mode="fixed"),
                 powder_plot,
             )

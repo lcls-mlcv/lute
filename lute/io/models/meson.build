@@ -3,6 +3,7 @@ py_sources = [
     'bayfai.py',
     'cheetah.py',
     'geometry.py',
+    'glint_index.py',
     '__init__.py',
     'mpi_tests.py',
     'nexus.py',
