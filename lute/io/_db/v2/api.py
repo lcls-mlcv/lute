@@ -26,6 +26,7 @@ __author__ = "Gabriel Dorlhiac"
 import json
 import logging
 import os
+import sqlite3
 import stat
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -41,9 +42,8 @@ else:
 logger: logging.Logger = get_logger(__name__, is_task=False)
 
 
-def _connect(db_path: str) -> "sqlite3.Connection":
+def _connect(db_path: str) -> sqlite3.Connection:
     """Open the database, refusing a file written by the v3 specification."""
-    import sqlite3
     from lute.io._db.common_sqlite import (
         DatabaseError,
         V3_BASE_USER_VERSION,
