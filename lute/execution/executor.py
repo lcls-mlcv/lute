@@ -1765,9 +1765,6 @@ class MPIExecutor(Executor):
         _submit_cmd: Run the task as a subprocess using `mpirun`.
     """
 
-    # Rank mapping/binding flags for `mpirun`; a Task may override them.
-    mpi_bind: str = "--map-by core"
-
     def _submit_cmd(self, executable_path: str, params: str) -> str:
         """Override submission command to use `mpirun`
 
@@ -1783,7 +1780,7 @@ class MPIExecutor(Executor):
         nprocs: int = max(
             int(os.environ.get("SLURM_NPROCS", len(os.sched_getaffinity(0)))) - 1, 1
         )
-        mpi_cmd: str = f"mpirun -np {nprocs} {self.mpi_bind}"
+        mpi_cmd: str = f"mpirun -np {nprocs} --map-by core"
         print(self._py_executable, flush=True)
         if __debug__:
             py_cmd = (

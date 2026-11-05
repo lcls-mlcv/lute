@@ -319,7 +319,6 @@ BayFAIOptimizer.update_environment(
         "PYTHONPATH": "/sdf/group/lcls/ds/tools/LCLSGeom/src",
     }
 )
-BayFAIOptimizer.mpi_bind = "--map-by numa --bind-to core:if-supported"
 
 BayFAIOptimizer2: MPIExecutor = MPIExecutor("BayFAI")
 """Optimize LCLS-II detector geometry using BayFAI: PyFAI coupled with Bayesian Optimization."""
@@ -337,4 +336,3 @@ BayFAIOptimizer2.update_environment(
         "PS_PARALLEL": "mpi",
     }
 )
-BayFAIOptimizer2.mpi_bind = "--map-by numa --bind-to core:if-supported"
