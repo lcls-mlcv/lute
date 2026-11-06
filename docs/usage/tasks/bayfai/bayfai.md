@@ -34,7 +34,7 @@ The `bayfai` workflow runs two managed `Task`s:
 - `-D <folder>`: put everything in `/sdf/data/lcls/ds/<hutch>/<experiment>/results/<folder>/` (optional but recommended).
 - `-W bayfai`: copy the `bayfai` workflow definition. **At MEC use `-W bayfai_mec`** (see [MEC 4 quads particularity](#mec-4-quads-particularity)).
 
-The script will ask for partition, account, nodes and ntasks. Press Enter to accept the defaults. The resources used by each `Task` are then set per hutch: `BayFAIOptimizer` runs on one whole node (`--exclusive`) with 120 tasks at MEC and 64 elsewhere.
+The script will ask for partition, account, nodes and ntasks. Press Enter to accept the defaults. The resources used by each `Task` are then set per hutch: `BayFAIOptimizer` runs on one node with 120 tasks at MEC and 64 elsewhere. Any other Slurm flags you pass to `setup_lute` (e.g. `--exclusive`, `--constraint=...`) are written into the DAG for every `Task`.
 
 After setup you will find, in `results/<folder>/lute_output/`:
 

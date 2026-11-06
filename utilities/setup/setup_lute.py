@@ -16,7 +16,6 @@ from krtc import KerberosTicket  # type: ignore
 logging.basicConfig(level=logging.INFO)
 logger: logging.Logger = logging.getLogger(__name__)
 
-SLURM_CONSTRAINT = "OS_VER:9.6"
 DEFAULT_CONFIG = {
     "MEC": {
         "SmallDataProducer": {
@@ -31,12 +30,10 @@ DEFAULT_CONFIG = {
         "BayFAIOptimizer": {
             "nodes": 1,
             "ntasks_per_node": 120,
-            "exclusive": True,
         },
         "BayFAIOptimizer2": {
             "nodes": 1,
             "ntasks_per_node": 120,
-            "exclusive": True,
         },
     },
     "ELSE": {
@@ -52,12 +49,10 @@ DEFAULT_CONFIG = {
         "BayFAIOptimizer": {
             "nodes": 1,
             "ntasks_per_node": 64,
-            "exclusive": True,
         },
         "BayFAIOptimizer2": {
             "nodes": 1,
             "ntasks_per_node": 64,
-            "exclusive": True,
         },
     },
 }
@@ -349,7 +344,7 @@ def update_dag_params(
 ) -> None:
     """Update slurm_params in a DAG file in place.
 
-    For tasks listed in DEFAULT_CONFIG, use the task-specific nodes/ntasks_per_node.
+    For tasks listed in DEFAULT_CONFIG, use their nodes/ntasks_per_node plus the other user flags.
     For all other tasks, forward the user-provided SLURM parameters verbatim.
 
     Args:
@@ -383,17 +378,21 @@ def update_dag_params(
             indent = line[: len(line) - len(stripped)]
             if current_task and current_task in default_config:
                 cfg = default_config[current_task]
+                # The task's nodes/ntasks replace the user's; every other flag is passed on.
+                extra = " ".join(
+                    p
+                    for p in extra_slurm_params.split()
+                    if not p.startswith(("--nodes", "--ntasks"))
+                )
                 params = (
                     f"--account={account} --partition={partition} "
                     f"--ntasks-per-node={cfg['ntasks_per_node']} "
-                    f"--nodes={cfg['nodes']} "
-                    f"--constraint={SLURM_CONSTRAINT}"
-                )
-                # A node shared with other jobs slows every rank.
-                if cfg.get("exclusive"):
-                    params += " --exclusive"
+                    f"--nodes={cfg['nodes']} {extra}"
+                ).rstrip()
             else:
-                params = f"--account={account} --partition={partition} --constraint={SLURM_CONSTRAINT} {extra_slurm_params}"
+                params = (
+                    f"--account={account} --partition={partition} {extra_slurm_params}"
+                )
             result.append(f"{indent}slurm_params: '{params}'\n")
         else:
             result.append(line)
@@ -550,7 +549,6 @@ def main() -> None:
     inplace_sed(config_path, sed_pattern)
 
     database_setup(f"{lute_output_dir}/lute.db")  # Setup permissions on database
-
 
     # Check for partition and account. If not provided, prompt the user to use defaults.
     partition: str = "milano"
