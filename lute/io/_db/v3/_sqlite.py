@@ -467,6 +467,219 @@ def _create_version_specifiers_table(con: sqlite3.Connection) -> None:
         con.execute(insert_query, (vs.value, vs.name))
 
 
+# (name, is_identity). Identity kinds make up a unit's key, e.g.
+# `experiment=mfx101624926;run=36`. Other kinds are metadata attached to units.
+LABEL_KINDS: Tuple[Tuple[str, bool], ...] = (
+    ("experiment", True),
+    ("run", True),
+    ("elog_sample", False),
+    ("elog_tag", False),
+)
+
+
+def _create_label_kinds_table(con: sqlite3.Connection) -> None:
+    """Setup the `label_kinds` table.
+
+    The `label_kinds` table holds the types of metadata which can be attached to
+    a unit, e.g. `experiment`, `run`, `elog_sample`, `elog_tag`.
+
+    This table contains constraints:
+    - The name must be unique.
+    - `is_identity` is 0 or 1. Identity kinds (`experiment`, `run`) make up the
+      key of a unit.
+
+    This function will also insert all the kinds defined in `LABEL_KINDS`.
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    create_query: str = """
+    CREATE TABLE IF NOT EXISTS label_kinds (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        is_identity INTEGER NOT NULL DEFAULT 0 CHECK (is_identity IN (0, 1))
+    );
+    """
+    insert_query: str = (
+        "INSERT OR IGNORE INTO label_kinds (name, is_identity) VALUES (?, ?)"
+    )
+    con.execute(create_query)
+    for name, is_identity in LABEL_KINDS:
+        con.execute(insert_query, (name, int(is_identity)))
+
+
+def _create_labels_table(con: sqlite3.Connection) -> None:
+    """Setup the `labels` table.
+
+    The `labels` table holds one (kind, value) pair per row, e.g.
+    (`elog_sample`, `Lyso`). Labels are shared by all units which have them.
+
+    This table contains constraints:
+    - The combination (kind_id, value) must be unique.
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    query: str = """
+    CREATE TABLE IF NOT EXISTS labels (
+        id INTEGER PRIMARY KEY,
+        kind_id INTEGER NOT NULL,
+        value TEXT NOT NULL,
+        UNIQUE (kind_id, value),
+        FOREIGN KEY (kind_id) REFERENCES label_kinds (id)
+    );
+    """
+    con.execute(query)
+
+
+def _create_units_table(con: sqlite3.Connection) -> None:
+    """Setup the `units` table.
+
+    The `units` table holds the things LUTE processes. Currently one unit is one
+    (experiment, run). The `key` is built from the unit's identity labels in a
+    fixed order, e.g. `experiment=mfx101624926;run=36`.
+
+    This table contains constraints:
+    - The key must be unique.
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    query: str = """
+    CREATE TABLE IF NOT EXISTS units (
+        id INTEGER PRIMARY KEY,
+        key TEXT NOT NULL UNIQUE
+    );
+    """
+    con.execute(query)
+
+
+def _create_unit_labels_table(con: sqlite3.Connection) -> None:
+    """Setup the `unit_labels` table.
+
+    The `unit_labels` table records which labels each unit has.
+
+    This table contains constraints:
+    - The combination (unit_id, label_id) must be unique.
+
+    An index on `label_id` (to find units by label) is setup in the function
+    `_setup_triggers_and_indices`.
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    query: str = """
+    CREATE TABLE IF NOT EXISTS unit_labels (
+        unit_id INTEGER NOT NULL,
+        label_id INTEGER NOT NULL,
+        PRIMARY KEY (unit_id, label_id),
+        FOREIGN KEY (unit_id) REFERENCES units (id),
+        FOREIGN KEY (label_id) REFERENCES labels (id)
+    );
+    """
+    con.execute(query)
+
+
+def _create_run_groups_table(con: sqlite3.Connection) -> None:
+    """Setup the `run_groups` table.
+
+    The `run_groups` table holds named sets of units, e.g. `lyso`. (`groups` is
+    an SQL keyword.)
+
+    This table contains constraints:
+    - The name must be unique.
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    query: str = """
+    CREATE TABLE IF NOT EXISTS run_groups (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    """
+    con.execute(query)
+
+
+def _create_group_members_table(con: sqlite3.Connection) -> None:
+    """Setup the `group_members` table.
+
+    The `group_members` table records which units are currently in each group.
+    Changing a group does not change which units past executions processed;
+    that is recorded in `execution_units`.
+
+    This table contains constraints:
+    - The combination (group_id, unit_id) must be unique.
+
+    An index on `unit_id` is setup in the function `_setup_triggers_and_indices`.
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    query: str = """
+    CREATE TABLE IF NOT EXISTS group_members (
+        group_id INTEGER NOT NULL,
+        unit_id INTEGER NOT NULL,
+        PRIMARY KEY (group_id, unit_id),
+        FOREIGN KEY (group_id) REFERENCES run_groups (id),
+        FOREIGN KEY (unit_id) REFERENCES units (id)
+    );
+    """
+    con.execute(query)
+
+
+def _create_execution_units_table(con: sqlite3.Connection) -> None:
+    """Setup the `execution_units` table.
+
+    The `execution_units` table records which units each execution processed.
+    It is the source of truth for "which runs was this made from": a per-run
+    Task has one row, a merge has one row per run it merged.
+
+    This table contains constraints:
+    - The combination (execution_id, unit_id) must be unique.
+
+    An index on `unit_id` is setup in the function `_setup_triggers_and_indices`.
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    query: str = """
+    CREATE TABLE IF NOT EXISTS execution_units (
+        execution_id INTEGER NOT NULL,
+        unit_id INTEGER NOT NULL,
+        PRIMARY KEY (execution_id, unit_id),
+        FOREIGN KEY (execution_id) REFERENCES executions (id),
+        FOREIGN KEY (unit_id) REFERENCES units (id)
+    );
+    """
+    con.execute(query)
+
+
+def _create_execution_groups_table(con: sqlite3.Connection) -> None:
+    """Setup the `execution_groups` table.
+
+    The `execution_groups` table records which group an execution was launched
+    under, if any.
+
+    This table contains constraints:
+    - An execution is launched under at most one group (execution_id is the
+      primary key).
+
+    Args:
+        con (sqlite3.Connection): A connection to the database.
+    """
+    query: str = """
+    CREATE TABLE IF NOT EXISTS execution_groups (
+        execution_id INTEGER PRIMARY KEY,
+        group_id INTEGER NOT NULL,
+        FOREIGN KEY (execution_id) REFERENCES executions (id),
+        FOREIGN KEY (group_id) REFERENCES run_groups (id)
+    );
+    """
+    con.execute(query)
+
+
 def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
     """Setup the trigger constraints and unique indices.
 
@@ -479,11 +692,22 @@ def _setup_triggers_and_indices(con: sqlite3.Connection) -> None:
     It also sets up a unique index on the `environment` table:
     - index = (execution_id, name)
 
+    And indices for the lookups done through units and groups:
+    - parameters (execution_id)
+    - execution_units (unit_id)
+    - unit_labels (label_id)
+    - group_members (unit_id)
+
     Args:
         con (sqlite3.Connection): A connection to the database.
     """
     query: str = """
     CREATE UNIQUE INDEX IF NOT EXISTS environment_index_0 ON environment (execution_id, name);
+
+    CREATE INDEX IF NOT EXISTS parameters_index_0 ON parameters (execution_id);
+    CREATE INDEX IF NOT EXISTS execution_units_index_0 ON execution_units (unit_id);
+    CREATE INDEX IF NOT EXISTS unit_labels_index_0 ON unit_labels (label_id);
+    CREATE INDEX IF NOT EXISTS group_members_index_0 ON group_members (unit_id);
 
     CREATE TRIGGER IF NOT EXISTS check_schema_update
     BEFORE UPDATE ON schema
@@ -583,6 +807,17 @@ def create_tables(con: sqlite3.Connection) -> None:
         _create_parameters_table(con)
 
         _create_environment_table(con)
+
+        _create_label_kinds_table(con)
+        _create_labels_table(con)
+        _create_units_table(con)
+        _create_unit_labels_table(con)
+
+        _create_run_groups_table(con)
+        _create_group_members_table(con)
+
+        _create_execution_units_table(con)
+        _create_execution_groups_table(con)
 
         _setup_triggers_and_indices(con)
 
