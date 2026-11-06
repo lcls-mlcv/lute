@@ -57,21 +57,19 @@ def _placeholder_then_update(work_dir, run):
 
 
 EXEC_UNITS = (
-    "SELECT e.id, u.key, c.run FROM executions e "
+    "SELECT e.id, u.key FROM executions e "
     "JOIN execution_units eu ON eu.execution_id = e.id "
-    "JOIN units u ON u.id = eu.unit_id "
-    "JOIN config c ON c.id = e.config_id ORDER BY e.id"
+    "JOIN units u ON u.id = eu.unit_id ORDER BY e.id"
 )
 
 
 def test_fixture_executions_linked_to_their_run(v3_db_dir):
-    rows = _rows(v3_db_dir, EXEC_UNITS)
-    assert [(key, run) for _, key, run in rows] == [
-        ("experiment=mfxtest;run=36", "36"),
-        ("experiment=mfxtest;run=36", "36"),
-        ("experiment=mfxtest;run=36", "36"),
-        ("experiment=mfxtest;run=37", "37"),
-        ("experiment=mfxtest;run=37", "37"),
+    assert _rows(v3_db_dir, EXEC_UNITS) == [
+        (1, "experiment=mfxtest;run=36"),
+        (2, "experiment=mfxtest;run=36"),
+        (3, "experiment=mfxtest;run=36"),
+        (4, "experiment=mfxtest;run=37"),
+        (5, "experiment=mfxtest;run=37"),
     ]
     # One link per execution, one unit per run (shared by Tasks and retries)
     assert _rows(v3_db_dir, "SELECT COUNT(*) FROM execution_units") == [(5,)]
@@ -81,19 +79,18 @@ def test_fixture_executions_linked_to_their_run(v3_db_dir):
 def test_one_execution_gives_one_link(tmp_path):
     work_dir = str(tmp_path)
     api.record_analysis_db(_described(_params(work_dir, "0036")))
-    assert _rows(work_dir, EXEC_UNITS) == [(1, "experiment=mfxtest;run=36", "0036")]
+    assert _rows(work_dir, EXEC_UNITS) == [(1, "experiment=mfxtest;run=36")]
 
 
 def test_placeholder_then_update_gives_one_link(tmp_path):
     work_dir = str(tmp_path)
     _placeholder_then_update(work_dir, "0036")
     assert _rows(work_dir, "SELECT COUNT(*) FROM executions") == [(1,)]
-    assert _rows(work_dir, EXEC_UNITS) == [(1, "experiment=mfxtest;run=36", "0036")]
+    assert _rows(work_dir, EXEC_UNITS) == [(1, "experiment=mfxtest;run=36")]
 
     # Same run in another format: a second execution, same unit
     _placeholder_then_update(work_dir, 36)
-    rows = _rows(work_dir, EXEC_UNITS)
-    assert [(eid, key) for eid, key, _ in rows] == [
+    assert _rows(work_dir, EXEC_UNITS) == [
         (1, "experiment=mfxtest;run=36"),
         (2, "experiment=mfxtest;run=36"),
     ]

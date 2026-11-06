@@ -91,9 +91,12 @@ def _create_config_table(con: sqlite3.Connection) -> None:
     The `config` table holds information from the AnalysisHeader which is often
     shared between many executions of many `Task`s.
 
+    The header's `experiment` and `run` are not stored here: they identify the
+    unit the execution processed (`units`, `execution_units`).
+
     This table contains constraints:
     - The combination of all columns
-      (title, experiment, run, date, lute_version, task_timeout) must be unique.
+      (title, date, lute_version, task_timeout) must be unique.
       Multiple executions can reference the same row of this table.
 
     Args:
@@ -103,12 +106,10 @@ def _create_config_table(con: sqlite3.Connection) -> None:
     CREATE TABLE IF NOT EXISTS config (
         id integer PRIMARY KEY,
         title TEXT,
-        experiment TEXT,
-        run TEXT,
         date TEXT,
         lute_version TEXT,
         task_timeout real,
-        UNIQUE(title, experiment, run, date, lute_version, task_timeout)
+        UNIQUE(title, date, lute_version, task_timeout)
     );
     """
     con.execute(query)
@@ -1225,6 +1226,14 @@ def _get_unit_for_header(con: sqlite3.Connection, lute_config: AnalysisHeader) -
     return get_or_create_unit(con, lute_config.experiment, lute_config.run)
 
 
+def _config_entries(lute_config: AnalysisHeader) -> Dict[str, Any]:
+    """Header fields stored in `config`: all but the unit's (experiment, run)."""
+    entries: Dict[str, Any] = lute_config.dict()
+    entries.pop("experiment", None)
+    entries.pop("run", None)
+    return entries
+
+
 def _link_execution_to_unit(
     con: sqlite3.Connection, execution_id: int, unit_id: int
 ) -> None:
@@ -1271,7 +1280,7 @@ def add_execution(con: sqlite3.Connection, cfg: DescribedAnalysis) -> None:
     # Config
     del cfg.task_parameters.lute_config
     config_id: int = _insert_maybe_ignore_return_id(
-        con=con, table="config", entries=lute_config.dict(), ignore=True
+        con=con, table="config", entries=_config_entries(lute_config), ignore=True
     )
 
     # Task Version information
@@ -1521,7 +1530,7 @@ def add_placeholder_execution(
     # Config
     lute_config: AnalysisHeader = params.lute_config
     config_id: int = _insert_maybe_ignore_return_id(
-        con=con, table="config", entries=lute_config.dict(), ignore=True
+        con=con, table="config", entries=_config_entries(lute_config), ignore=True
     )
 
     # Task Version information
@@ -1569,7 +1578,8 @@ def select_param_from_db(
     """Retrieve a specific value for a parameter subject to conditions.
 
     If multiple parameter/value pairs match the provided conditions, this function
-    will return the latest entry.
+    will return the latest entry: the most recent timestamp, then the highest
+    execution id for executions recorded within the same second.
 
     Args:
         con (sqlite3.Connection): A connection to the database.
@@ -1581,7 +1591,11 @@ def select_param_from_db(
 
         condition (Dict[str, str]): A dictionary of conditions. Currently supports:
             - valid_flag: 1/0 # Only include "valid" results.
-            - run: XYZ # Only look at entries from this run. Otherwise, take the latest.
+            - run: XYZ # Only executions which processed a unit with this run
+                (normalized, e.g. "36"). Otherwise, take the latest.
+            - unit: key # Only executions which processed this unit, e.g.
+                "experiment=mfx101624926;run=36".
+            - group: name # Only executions launched under this group.
 
         is_result (bool): If True, select the field from the results table instead
             of the parameters table. E.g. `param_name = payload, is_result=True`
@@ -1603,7 +1617,22 @@ def select_param_from_db(
         if key == "valid_flag":
             formatted_conditions.append("r.valid_flag = :valid_flag")
         elif key == "run":
-            formatted_conditions.append("c.run = :run")
+            formatted_conditions.append("""e.id IN (
+                SELECT eu.execution_id FROM execution_units eu
+                JOIN unit_labels ul ON ul.unit_id = eu.unit_id
+                JOIN labels l ON l.id = ul.label_id
+                JOIN label_kinds k ON k.id = l.kind_id
+                WHERE k.name = 'run' AND l.value = :run)""")
+        elif key == "unit":
+            formatted_conditions.append("""e.id IN (
+                SELECT eu.execution_id FROM execution_units eu
+                JOIN units u ON u.id = eu.unit_id
+                WHERE u.key = :unit)""")
+        elif key == "group":
+            formatted_conditions.append("""e.id IN (
+                SELECT eg.execution_id FROM execution_groups eg
+                JOIN run_groups g ON g.id = eg.group_id
+                WHERE g.name = :group)""")
         elif key == "param":
             if not is_result:
                 formatted_conditions.append("p.name = :param")
@@ -1630,10 +1659,9 @@ def select_param_from_db(
         SELECT r.{param_name}
         FROM results r
         JOIN executions e ON e.result_id = r.id
-        JOIN config c ON e.config_id = c.id
         JOIN tasks t ON e.task_id = t.id
         {where_clause}
-        ORDER BY e.timestamp DESC
+        ORDER BY e.timestamp DESC, e.id DESC
         LIMIT 1
         """
     else:
@@ -1641,11 +1669,10 @@ def select_param_from_db(
         SELECT p.value
         FROM parameters p
         JOIN executions e ON p.execution_id = e.id
-        JOIN config c ON e.config_id = c.id
         JOIN results r ON e.result_id = r.id
         JOIN tasks t ON e.task_id = t.id
         {where_clause}
-        ORDER BY e.timestamp DESC
+        ORDER BY e.timestamp DESC, e.id DESC
         LIMIT 1
         """
     with con:
@@ -1690,10 +1717,9 @@ def executions_summary(
         SELECT e.id, e.timestamp, t.name, r.summary, r.payload, r.status, r.valid_flag
         FROM parameters p
         JOIN executions e ON p.execution_id = e.id
-        JOIN config c ON e.config_id = c.id
         JOIN results r ON e.result_id = r.id
         JOIN tasks t ON e.task_id = t.id
-        ORDER BY e.timestamp ASC
+        ORDER BY e.timestamp ASC, e.id ASC
     """
     with con:
         cur: sqlite3.Cursor = con.execute(join_query)
@@ -1727,11 +1753,10 @@ def task_parameters_summary(
         SELECT e.id, e.timestamp, r.valid_flag, p.name, p.value
         FROM parameters p
         JOIN executions e ON p.execution_id = e.id
-        JOIN config c ON e.config_id = c.id
         JOIN results r ON e.result_id = r.id
         JOIN tasks t ON e.task_id = t.id
         WHERE t.name = ?
-        ORDER BY e.timestamp ASC
+        ORDER BY e.timestamp ASC, e.id ASC
     """
     with con:
         cur: sqlite3.Cursor = con.execute(join_query, (task_name,))

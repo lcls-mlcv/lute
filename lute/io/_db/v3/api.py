@@ -168,16 +168,24 @@ def update_analysis_db(cfg: DescribedAnalysis, row_ids: RowIds) -> None:
         logger.error("Cannot setup permissions on database!")
 
 
+# Default of `for_run`: read the RUN environment variable when called
+RUN_FROM_ENV: str = "$RUN"
+
+
 def read_latest_db_entry(
     db_dir: str,
     task_name: str,
     param: str,
     valid_only: bool = True,
-    for_run: Optional[Union[str, int]] = os.getenv("RUN"),
+    for_run: Optional[Union[str, int]] = RUN_FROM_ENV,
+    for_unit: Optional[str] = None,
+    for_group: Optional[str] = None,
 ) -> Optional[Any]:
     """Read most recent value entered into the database for a Task parameter.
 
     (Will be updated for schema compliance as well as Task name.)
+
+    The filters (`for_run`, `for_unit`, `for_group`) combine: all must match.
 
     Args:
         db_dir (str): Database location.
@@ -191,7 +199,15 @@ def read_latest_db_entry(
             (Failed). Default = True.
 
         for_run (Optional[str | int]): Only consider latest entries from the
-            specific experiment run provided.
+            specific experiment run provided ("0036", "36" and 36 are the same
+            run). By default, the RUN environment variable at the time of the
+            call. None or empty: any run.
+
+        for_unit (Optional[str]): Only consider entries which processed this
+            unit, given by its key, e.g. "experiment=mfx101624926;run=36".
+
+        for_group (Optional[str]): Only consider entries launched under this
+            group, e.g. a merge of the group's runs.
 
     Returns:
         val (Any): The most recently entered value for `param` of `task_name`
@@ -199,6 +215,10 @@ def read_latest_db_entry(
     """
     import sqlite3
     from ._sqlite import select_param_from_db
+    from ._units import normalize_run
+
+    if for_run == RUN_FROM_ENV:
+        for_run = os.getenv("RUN")
 
     db_path: str = f"{db_dir}/lute.db"
     con: sqlite3.Connection = open_db(db_path)
@@ -208,8 +228,14 @@ def read_latest_db_entry(
             if valid_only:
                 cond["valid_flag"] = "1"
 
-            if for_run is not None:
-                cond["run"] = str(for_run)
+            if for_run is not None and str(for_run).strip() != "":
+                cond["run"] = normalize_run(for_run)
+
+            if for_unit is not None:
+                cond["unit"] = for_unit
+
+            if for_group is not None:
+                cond["group"] = for_group
 
             new_param: str = param
             is_result: bool = False
