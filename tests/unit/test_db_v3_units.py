@@ -183,15 +183,9 @@ def test_changing_group_keeps_execution_units(tmp_path, v3_db_dir):
     db_path = str(tmp_path / "lute.db")
     shutil.copy(os.path.join(v3_db_dir, "lute.db"), db_path)
     con = open_db(db_path)
+    # The fixture executions are already linked to their run's unit
     u36 = get_or_create_unit(con, "mfxtest", 36)
     u37 = get_or_create_unit(con, "mfxtest", 37)
-    # Link the fixture executions to their run's unit (step 5 will do this)
-    con.execute(
-        "INSERT INTO execution_units (execution_id, unit_id) "
-        "SELECT e.id, CASE c.run WHEN '36' THEN ? ELSE ? END "
-        "FROM executions e JOIN config c ON c.id = e.config_id",
-        (u36, u37),
-    )
     create_group(con, "both", [u36, u37])
     before = con.execute("SELECT * FROM execution_units ORDER BY 1, 2").fetchall()
 
