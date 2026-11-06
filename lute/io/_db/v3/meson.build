@@ -3,6 +3,7 @@ py_sources = [
     'api.py',
     '_sqlite.py',
     '_sqlite_versioning.py',
+    '_units.py',
 ]
 
 py3.install_sources(
