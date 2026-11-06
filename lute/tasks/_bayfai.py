@@ -218,7 +218,7 @@ class _SingleGeometry(SingleGeometry):
         # qmask == i and mask2 are all False (mask2 kept zero there), and row-major order is preserved.
         mask2 = np.zeros(qmask.shape, dtype=bool)
         hi = qmask.max(axis=1)
-        lo = np.where(qmask < 0, count.size, qmask).min(axis=1)
+        lo = qmask.min(axis=1, initial=count.size, where=qmask >= 0)
         prev = []
         ms = G.marchingsquares.MarchingSquaresMergeImpl(
             ttha, mask=self.geometry_refinement.detector.mask, use_minmax_cache=True
@@ -817,12 +817,34 @@ class BayFAIOpt:
             X_norm_samples = X_norm[idx_samples]
             return X_samples, X_norm_samples
 
-    def _fast_maps(self, gr):
-        """Serve extract_cp's 2theta/chi maps from the cached pixel positions (same cython kernels).
+    @functools.cached_property
+    def _massif(self):
+        """The powder's Massif, built once: peaks_from_area only reads its data, mask and interpolator."""
+        return _Massif(
+            self.stacked_powder, self.detector.dynamic_mask(self.stacked_powder)
+        )
+
+    @functools.cached_property
+    def _pos64(self):
+        """float64 buffers for p1 - poni1, p2 - poni2 and p3: calc_tth copies other dtypes to float64."""
+        p1, p2, p3 = self.detector.calc_cartesian_positions()
+        return (
+            np.empty(p1.shape),
+            np.empty(p2.shape),
+            None if p3 is None else p3.astype(np.float64),
+        )
+
+    def _fast_maps(self, sg):
+        """Serve extract_cp's Massif and 2theta/chi maps from per-rank caches (same cython kernels).
 
         chiArray is only read at ring-contour pixels, so chi is computed per indexed pixel instead of
-        over the full grid; both skip pyFAI's fromfunction index grids. No-op unless the inputs match.
+        over the full grid; both skip pyFAI's fromfunction index grids. The maps are left alone unless
+        the inputs match.
         """
+        # Each extract_cp otherwise allocates and frees ~1 GiB on jungfrau16M; on a node whose memory is
+        # full of page cache, re-faulting those pages costs more kernel time than the scoring itself.
+        sg.massif = self._massif
+        gr = sg.geometry_refinement
         if not (
             self.stacked_powder.shape == self.detector.shape
             and gr._parallax is None
@@ -831,14 +853,16 @@ class BayFAIOpt:
         ):
             return
         p1, p2, p3 = self.detector.calc_cartesian_positions()
+        b1, b2, b3 = self._pos64
+        # dtype=p1.dtype: the difference is still taken in the positions' precision, then widened.
         gr.twoThetaArray = lambda shape=None: _geometry.calc_tth(
             L=gr._dist,
             rot1=gr._rot1,
             rot2=gr._rot2,
             rot3=gr._rot3,
-            pos1=p1 - gr._poni1,
-            pos2=p2 - gr._poni2,
-            pos3=p3,
+            pos1=np.subtract(p1, gr._poni1, out=b1, dtype=p1.dtype),
+            pos2=np.subtract(p2, gr._poni2, out=b2, dtype=p2.dtype),
+            pos3=b3,
         )
 
         class ChiAt:
@@ -895,7 +919,7 @@ class BayFAIOpt:
             detector=self.detector,
             geometry=geom_sample,
         )
-        self._fast_maps(sg.geometry_refinement)
+        self._fast_maps(sg)
         with _fast_extract_cp(max_rings):
             sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         return sg.geometry_refinement.data
@@ -936,7 +960,7 @@ class BayFAIOpt:
             detector=self.detector,
             geometry=geom_sample,
         )
-        self._fast_maps(sg.geometry_refinement)
+        self._fast_maps(sg)
         with _fast_extract_cp(max_rings):
             sg.extract_cp(max_rings=max_rings, pts_per_deg=pts_per_deg, Imin=Imin)
         data = sg.geometry_refinement.data
