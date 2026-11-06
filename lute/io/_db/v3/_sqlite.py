@@ -1212,20 +1212,51 @@ def _add_version(
     return task_version_id
 
 
+def _get_unit_for_header(con: sqlite3.Connection, lute_config: AnalysisHeader) -> int:
+    """Return the unit for the header's (experiment, run), creating it if needed.
+
+    Raises:
+        DatabaseError: If the run (or experiment) is empty. Every execution in
+            v3 must be for a run.
+    """
+    # Imported here: `_units` imports from this module
+    from ._units import get_or_create_unit
+
+    return get_or_create_unit(con, lute_config.experiment, lute_config.run)
+
+
+def _link_execution_to_unit(
+    con: sqlite3.Connection, execution_id: int, unit_id: int
+) -> None:
+    """Record in `execution_units` that the execution processed the unit."""
+    con.execute(
+        "INSERT INTO execution_units (execution_id, unit_id) VALUES (?, ?)",
+        (execution_id, unit_id),
+    )
+
+
 def add_execution(con: sqlite3.Connection, cfg: DescribedAnalysis) -> None:
     """Write an DescribedAnalysis object to the database.
 
     This will unpack all the values from the object and distribute the entries
-    across all the various tables.
+    across all the various tables. The execution is linked to the unit of its
+    (experiment, run) in `execution_units`.
 
     Args:
         con (sqlite3.Connection): A connection to the database.
 
         cfg (DescribedAnalysis): The DescribedAnalysis completed by the Executor
             after Task completion.
+
+    Raises:
+        DatabaseError: If the header has no run.
     """
     if cfg.task_parameters is None:
         return
+    # Unit first: refuse an execution without a run before writing anything
+    lute_config: AnalysisHeader = cfg.task_parameters.lute_config
+    unit_id: int = _get_unit_for_header(con, lute_config)
+
     entries: Dict[str, Any] = {}
     # Task
     entries["name"] = cfg.task_result.task_name
@@ -1238,7 +1269,6 @@ def add_execution(con: sqlite3.Connection, cfg: DescribedAnalysis) -> None:
     entries.clear()
 
     # Config
-    lute_config: AnalysisHeader = cfg.task_parameters.lute_config
     del cfg.task_parameters.lute_config
     config_id: int = _insert_maybe_ignore_return_id(
         con=con, table="config", entries=lute_config.dict(), ignore=True
@@ -1325,6 +1355,7 @@ def add_execution(con: sqlite3.Connection, cfg: DescribedAnalysis) -> None:
     execution_id: int = _insert_maybe_ignore_return_id(
         con=con, table="executions", entries=entries, ignore=False
     )
+    _link_execution_to_unit(con=con, execution_id=execution_id, unit_id=unit_id)
 
     # Add individual param/values and their param_meta
     # NOTE: `param_meta` is probably redundant at the moment, since this may all
@@ -1356,9 +1387,15 @@ def update_execution(
 
         row_ids (RowIds): A dictionary containing the entries previously added by the
             Task.
+
+    Raises:
+        DatabaseError: If the header has no run.
     """
     if cfg.task_parameters is None:
         return
+    # The Executor rebuilds the parameters, header included, from the entries
+    # the Task stored, so this is the header the Task ran with.
+    unit_id: int = _get_unit_for_header(con, cfg.task_parameters.lute_config)
     entries: Dict[str, Any] = {}
 
     executor_id: int = _add_executor_and_communicators(con=con, cfg=cfg)
@@ -1429,6 +1466,7 @@ def update_execution(
     execution_id: int = _insert_maybe_ignore_return_id(
         con=con, table="executions", entries=entries, ignore=False
     )
+    _link_execution_to_unit(con=con, execution_id=execution_id, unit_id=unit_id)
 
     _update_parameters(
         con=con, param_ids=row_ids["parameter_ids"], execution_id=execution_id
@@ -1453,6 +1491,10 @@ def add_placeholder_execution(
     This is intended to be a placeholder, written by the Task layer. The execution
     layer should then call `update_execution` to fill in the rest of the information.
 
+    The unit for the header's (experiment, run) is created here, but the
+    execution is linked to it by `update_execution`, which creates the
+    execution.
+
     Args:
         con (sqlite3.Connection): A connection to the database.
 
@@ -1460,9 +1502,14 @@ def add_placeholder_execution(
 
     Returns:
         row_ids (RowIds): The set of row ids for all entries that were inserted.
+
+    Raises:
+        DatabaseError: If the header has no run.
     """
     if params is None:
         return None
+    # Refuse a Task without a run before it starts
+    _get_unit_for_header(con, params.lute_config)
     entries: Dict[str, Any] = {}
     # Task
     entries["name"] = params.__class__.__name__[:-10]

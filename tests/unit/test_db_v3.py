@@ -252,20 +252,24 @@ NEW_TABLES = {
 
 @pytest.fixture
 def v3_con(tmp_path, v3_db_dir):
-    """Connection to a copy of the v3 fixture (5 executions), FKs enforced."""
+    """Connection to a copy of the v3 fixture (5 executions), FKs enforced.
+
+    The write path created unit 1 (run 36, labels 1-2) and linked execution 1
+    to it. Add a label, a group and a group link to build on.
+    """
     db_path = str(tmp_path / "lute.db")
     shutil.copy(os.path.join(v3_db_dir, "lute.db"), db_path)
     con = open_db(db_path)
-    # One unit, label, group and link to build on
-    con.execute("INSERT INTO units (key) VALUES ('experiment=mfxtest;run=36')")
     con.execute(
         "INSERT INTO labels (kind_id, value) "
         "SELECT id, 'Lyso' FROM label_kinds WHERE name = 'elog_sample'"
     )
-    con.execute("INSERT INTO unit_labels (unit_id, label_id) VALUES (1, 1)")
+    con.execute(
+        "INSERT INTO unit_labels (unit_id, label_id) "
+        "SELECT 1, id FROM labels WHERE value = 'Lyso'"
+    )
     con.execute("INSERT INTO run_groups (name) VALUES ('lyso')")
     con.execute("INSERT INTO group_members (group_id, unit_id) VALUES (1, 1)")
-    con.execute("INSERT INTO execution_units (execution_id, unit_id) VALUES (1, 1)")
     con.execute("INSERT INTO execution_groups (execution_id, group_id) VALUES (1, 1)")
     con.commit()
     yield con
@@ -305,7 +309,8 @@ def test_v3_valid_rows_accepted(v3_con):
         "JOIN unit_labels ul ON ul.unit_id = u.id "
         "JOIN labels l ON l.id = ul.label_id "
         "JOIN execution_groups eg ON eg.execution_id = eu.execution_id "
-        "JOIN run_groups g ON g.id = eg.group_id"
+        "JOIN run_groups g ON g.id = eg.group_id "
+        "WHERE l.value = 'Lyso'"
     ).fetchall()
     assert linked == [("experiment=mfxtest;run=36", "Lyso", "lyso")]
 
