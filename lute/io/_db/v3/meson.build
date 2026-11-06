@@ -2,6 +2,7 @@ py_sources = [
     '__init__.py',
     'api.py',
     '_sqlite.py',
+    '_units.py',
     '_versioning.py',
 ]
 
