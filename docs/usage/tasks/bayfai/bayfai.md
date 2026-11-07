@@ -34,7 +34,7 @@ The `bayfai` workflow runs two managed `Task`s:
 - `-D <folder>`: put everything in `/sdf/data/lcls/ds/<hutch>/<experiment>/results/<folder>/` (optional but recommended).
 - `-W bayfai`: copy the `bayfai` workflow definition. **At MEC use `-W bayfai_mec`** (see [MEC 4 quads particularity](#mec-4-quads-particularity)).
 
-The script will ask for partition, account, nodes and ntasks. Press Enter to accept the defaults. The resources used by each `Task` are then set per hutch: `BayFAIOptimizer` runs on one node with 64 tasks at every hutch. Any other Slurm flags you pass to `setup_lute` (e.g. `--exclusive`, `--constraint=...`) are written into the DAG for every `Task`.
+The script will ask for partition, account, nodes and ntasks. Press Enter to accept the defaults: `BayFAIOptimizer` then runs on one node with 64 tasks at every hutch. Slurm flags you pass to `setup_lute` are written into the DAG for every `Task` and are never overwritten, e.g. `--ntasks-per-node=120`, `--nodes=2`, `--exclusive` or `--constraint=...`.
 
 After setup you will find, in `results/<folder>/lute_output/`:
 
@@ -143,7 +143,7 @@ BayFAI runs one BO per MPI rank.
 
 With `parallelized: "dist"`, `bounds.dist` (default 0.035-0.4 m) is split into one distance window per rank. With `dist_spacing: "geometric"` (default), rank `r` gets `[b_r, b_r+1]` with `b = low*(high/low)**(r/N)` for `N` ranks, so windows are narrower at short distance, where the rings move most per mm; `"linear"` gives `N` equal windows. Each rank searches its window (its edges) and optimizes the other parameters; the final refinement may move the distance by `step` window widths. The best geometry across all ranks wins.
 
-**The more ranks (CPUs) you give BayFAI, the more of the search space it explores, and the better the chance that BO converges to the right geometry. The trade-off is that the job takes longer and waits longer in the queue.** The default (64 tasks on one node, at every hutch) is a good compromise. At MEC, 119 ranks give more seeds per quad and solve a few more seed-sensitive quads; at other hutches, 119 ranks did not help and double the memory. To change it, edit `--ntasks-per-node` in the `BayFAIOptimizer` `slurm_params` of the DAG (e.g. `120` for 119 ranks).
+**The more ranks (CPUs) you give BayFAI, the more of the search space it explores, and the better the chance that BO converges to the right geometry. The trade-off is that the job takes longer and waits longer in the queue.** The default (64 tasks on one node, at every hutch) is a good compromise. At MEC, 119 ranks give more seeds per quad and solve a few more seed-sensitive quads; at other hutches, 119 ranks did not help and double the memory. To change it, pass e.g. `--ntasks-per-node=120` (119 ranks) to `setup_lute`, or edit `slurm_params` in the DAG.
 
 ## MEC 4 Quads particularity
 

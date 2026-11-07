@@ -341,10 +341,11 @@ def update_dag_params(
     account: str,
     extra_slurm_params: str,
     default_config: dict,
+    user_slurm_params: str,
 ) -> None:
     """Update slurm_params in a DAG file in place.
 
-    For tasks listed in DEFAULT_CONFIG, use their nodes/ntasks_per_node plus the other user flags.
+    For tasks listed in DEFAULT_CONFIG, use the user's flags and fill unset nodes/ntasks from it.
     For all other tasks, forward the user-provided SLURM parameters verbatim.
 
     Args:
@@ -355,6 +356,8 @@ def update_dag_params(
         account (str): SLURM account.
 
         extra_slurm_params (str): Additional SLURM parameters, forwarded as-is.
+
+        user_slurm_params (str): The flags the user passed, without the prompted defaults.
     """
     with open(dag_path, "r") as f:
         lines: List[str] = f.readlines()
@@ -378,17 +381,14 @@ def update_dag_params(
             indent = line[: len(line) - len(stripped)]
             if current_task and current_task in default_config:
                 cfg = default_config[current_task]
-                # The task's nodes/ntasks replace the user's; every other flag is passed on.
-                extra = " ".join(
-                    p
-                    for p in extra_slurm_params.split()
-                    if not p.startswith(("--nodes", "--ntasks"))
-                )
-                params = (
-                    f"--account={account} --partition={partition} "
-                    f"--ntasks-per-node={cfg['ntasks_per_node']} "
-                    f"--nodes={cfg['nodes']} {extra}"
-                ).rstrip()
+                # The task's defaults only fill in what the user did not set.
+                flags = [f"--account={account}", f"--partition={partition}"]
+                flags += [user_slurm_params] if user_slurm_params else []
+                if "--ntasks" not in user_slurm_params:
+                    flags.append(f"--ntasks-per-node={cfg['ntasks_per_node']}")
+                if "--nodes" not in user_slurm_params:
+                    flags.append(f"--nodes={cfg['nodes']}")
+                params = " ".join(flags)
             else:
                 params = (
                     f"--account={account} --partition={partition} {extra_slurm_params}"
@@ -588,7 +588,8 @@ def main() -> None:
             logger.info("Exiting.")
             sys.exit(0)
 
-    extra_slurm_params: str = " ".join(extra_slurm_args)
+    user_slurm_params: str = " ".join(extra_slurm_args)
+    extra_slurm_params: str = user_slurm_params
     # Check for at least nodes and ntasks, and if not provided, prompt the user to use defaults.
     nodes: int = 1
     if "nodes" not in extra_slurm_params:
@@ -640,7 +641,12 @@ def main() -> None:
         # Update the DAG file in place with collected SLURM params
         config = DEFAULT_CONFIG.get(hutch.upper(), DEFAULT_CONFIG["ELSE"])
         update_dag_params(
-            full_workflow_path, partition, account, extra_slurm_params, config
+            full_workflow_path,
+            partition,
+            account,
+            extra_slurm_params,
+            config,
+            user_slurm_params,
         )
 
         # Build workflow dict with appropriate trigger
