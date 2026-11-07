@@ -26,14 +26,14 @@ DEFAULT_CONFIG = {
             "nodes": 1,
             "ntasks_per_node": 10,
         },
-        # 119 ranks: more seeds per dataset on the same billed node (MEC train core-h -29.5%).
+        # 63 ranks as elsewhere; 119 (edit slurm_params in the DAG) gives more seeds per quad.
         "BayFAIOptimizer": {
             "nodes": 1,
-            "ntasks_per_node": 120,
+            "ntasks_per_node": 64,
         },
         "BayFAIOptimizer2": {
             "nodes": 1,
-            "ntasks_per_node": 120,
+            "ntasks_per_node": 64,
         },
     },
     "ELSE": {
