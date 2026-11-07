@@ -21,8 +21,6 @@ from lute.tasks.task import Task
 from lute.tasks.dataclasses import TaskStatus, ElogSummaryPlots
 from lute.execution.logging import get_logger
 
-import logging
-
 logger: logging.Logger = get_logger(__name__)
 
 
