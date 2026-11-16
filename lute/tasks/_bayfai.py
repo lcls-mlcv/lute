@@ -1215,6 +1215,7 @@ class BayFAIOpt:
         )
         gp_model.fit(X_norm_samples, y_norm)
         visited_idx = list([])
+        ckpt = {}
 
         # 5. Run the Bayesian Optimization loop
         for i in range(n_iterations):
@@ -1235,6 +1236,16 @@ class BayFAIOpt:
             else:
                 y_norm = y - np.mean(y)
 
+            # Refine as a run stopping here would; extract_data draws from the global RNG,
+            # so restoring its state keeps the rest of the run identical to an uninstrumented one.
+            if (i + 1) % 10 == 0 and i + 1 < n_iterations:
+                state = np.random.get_state()
+                b = X_samples[np.argmax(y)]
+                ckpt[i + 1] = self.gradient_descent(
+                    b, self.extract_data(b, Imin, max_rings, pts_per_deg), res, step
+                )
+                np.random.set_state(state)
+
             # 8. Update the Gaussian Process model
             if i < n_iterations - 1:  # the final refit is never read
                 gp_model.fit(X_norm_samples, y_norm)
@@ -1247,7 +1258,9 @@ class BayFAIOpt:
             best_param, data, res, step
         )
         logger.info(f"Rank {self.rank}: score={score:3e}, penalty={penalty:3e}")
+        ckpt[n_iterations] = (score, sigma, penalty, params)
         result = {
+            "ckpt": ckpt,
             "bo_history": bo_history,
             "params": params,
             "score": score,
@@ -1375,6 +1388,18 @@ class BayFAIOpt:
         self.scan["sigma"] = self.comm.gather(results["sigma"], root=0)
         self.scan["penalty"] = self.comm.gather(results["penalty"], root=0)
         self.scan["best_idx"] = self.comm.gather(results["best_idx"], root=0)
+        ckpts = self.comm.gather(results.get("ckpt", {}), root=0)
+        if self.rank == 0:
+            for r, h in enumerate(self.scan["bo_history"]):
+                logger.info(f"ITHIST rank={r} scores={','.join(f'{s:.6g}' for s in h['scores'])}")
+            # A rank that skipped BO (all-zero initial scores) returns the same result at every k.
+            fin = list(zip(self.scan["score"], self.scan["sigma"], self.scan["penalty"], self.scan["params"]))
+            ckpts = [{k: c.get(k, f) for k in set().union(*ckpts)} for c, f in zip(ckpts, fin)]
+            for k in sorted(ckpts[0]):
+                sel = [c[k][0] + lbda * c[k][2] for c in ckpts]
+                w = int(np.argmax(sel))
+                p = ",".join(repr(float(v)) for v in ckpts[w][k][3])
+                logger.info(f"ITCKPT k={k} rank={w} score={sel[w]:.6g} params={p}")
 
         # Winner selection
         if self.rank == 0:
