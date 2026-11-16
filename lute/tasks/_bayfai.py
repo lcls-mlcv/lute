@@ -1391,10 +1391,22 @@ class BayFAIOpt:
         ckpts = self.comm.gather(results.get("ckpt", {}), root=0)
         if self.rank == 0:
             for r, h in enumerate(self.scan["bo_history"]):
-                logger.info(f"ITHIST rank={r} scores={','.join(f'{s:.6g}' for s in h['scores'])}")
+                logger.info(
+                    f"ITHIST rank={r} scores={','.join(f'{s:.6g}' for s in h['scores'])}"
+                )
             # A rank that skipped BO (all-zero initial scores) returns the same result at every k.
-            fin = list(zip(self.scan["score"], self.scan["sigma"], self.scan["penalty"], self.scan["params"]))
-            ckpts = [{k: c.get(k, f) for k in set().union(*ckpts)} for c, f in zip(ckpts, fin)]
+            fin = list(
+                zip(
+                    self.scan["score"],
+                    self.scan["sigma"],
+                    self.scan["penalty"],
+                    self.scan["params"],
+                )
+            )
+            ckpts = [
+                {k: c.get(k, f) for k in set().union(*ckpts)}
+                for c, f in zip(ckpts, fin)
+            ]
             for k in sorted(ckpts[0]):
                 sel = [c[k][0] + lbda * c[k][2] for c in ckpts]
                 w = int(np.argmax(sel))
